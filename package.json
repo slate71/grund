@@ -1,0 +1,24 @@
+{
+  "name": "grund",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Everything as code monorepo for portfolio operations",
+  "author": "Lukas Andersen",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "echo 'No dev script configured yet'",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
