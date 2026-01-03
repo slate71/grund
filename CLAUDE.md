@@ -7,6 +7,7 @@ This is the "everything as code" monorepo for a portfolio operator. One repo run
 **Current state:** Scaffolding. First feature will be a Daily Operations Brief agent.
 
 **Planned structure:**
+
 ```
 grund/
 ├── apps/dashboard/         # Operations dashboard
@@ -20,5 +21,6 @@ grund/
 ```
 
 **Existing work to migrate:**
+
 - @slate71/tool-invocation (npm package)
 - @slate71/agent-status (npm package)
