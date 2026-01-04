@@ -1,0 +1,72 @@
+# Grund
+
+> Everything as code monorepo for portfolio operations
+
+A comprehensive monorepo that runs an entire portfolio operation — dashboard, agents, career pipeline, marketing, and finances. Everything ships with `git push`. AI has full context because it's all here.
+
+## Overview
+
+**Owner:** Lukas Andersen — Staff Frontend Engineer building toward $10M in assets by age 56.
+
+**Current State:** Scaffolding. First feature will be a Daily Operations Brief agent.
+
+## Project Structure
+
+```
+grund/
+├── apps/
+│   └── dashboard/         # Operations dashboard
+├── packages/
+│   ├── ops-ui/            # UI components (tool-invocation, agent-status)
+│   ├── agents/             # Agent definitions
+│   └── core/               # Shared types, MCP utils
+├── career/                 # Job pipeline, prep, resume
+├── marketing/              # Blog, portfolio site
+├── docs/                   # Internal docs
+└── finances/               # Budgets, Attain integration
+```
+
+## Prerequisites
+
+- Node.js >= 18.0.0
+- pnpm >= 9.0.0
+
+## Getting Started
+
+1. **Install dependencies:**
+   ```bash
+   pnpm install
+   ```
+
+2. **Run development server:**
+   ```bash
+   pnpm dev
+   ```
+
+3. **Build all packages:**
+   ```bash
+   pnpm build
+   ```
+
+## Available Scripts
+
+- `pnpm dev` - Start development server
+- `pnpm build` - Build all packages
+- `pnpm test` - Run tests across all packages
+- `pnpm lint` - Lint all packages
+- `pnpm typecheck` - Type check all packages
+
+## Workspace Structure
+
+This monorepo uses [pnpm workspaces](https://pnpm.io/workspaces) to manage multiple packages:
+
+- `apps/*` - Applications
+- `packages/*` - Shared packages
+- `career/` - Career pipeline tools
+- `marketing/` - Marketing assets
+- `finances/` - Financial management
+
+## License
+
+MIT
+
