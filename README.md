@@ -6,8 +6,6 @@ A comprehensive monorepo that runs an entire portfolio operation — dashboard, 
 
 ## Overview
 
-**Owner:** Lukas Andersen — Staff Frontend Engineer building toward $10M in assets by age 56.
-
 **Current State:** Scaffolding. First feature will be a Daily Operations Brief agent.
 
 ## Project Structure
@@ -34,11 +32,13 @@ grund/
 ## Getting Started
 
 1. **Install dependencies:**
+
    ```bash
    pnpm install
    ```
 
 2. **Run development server:**
+
    ```bash
    pnpm dev
    ```
@@ -69,4 +69,3 @@ This monorepo uses [pnpm workspaces](https://pnpm.io/workspaces) to manage multi
 ## License
 
 MIT
-
