@@ -27,38 +27,38 @@ grund/
 ## Prerequisites
 
 - Node.js >= 18.0.0
-- pnpm >= 9.0.0
+- [Bun](https://bun.sh) >= 1.0.0
 
 ## Getting Started
 
 1. **Install dependencies:**
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. **Run development server:**
 
    ```bash
-   pnpm dev
+   bun dev
    ```
 
 3. **Build all packages:**
    ```bash
-   pnpm build
+   bun build
    ```
 
 ## Available Scripts
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build all packages
-- `pnpm test` - Run tests across all packages
-- `pnpm lint` - Lint all packages
-- `pnpm typecheck` - Type check all packages
+- `bun dev` - Start development server
+- `bun build` - Build all packages
+- `bun test` - Run tests across all packages
+- `bun lint` - Lint all packages
+- `bun typecheck` - Type check all packages
 
 ## Workspace Structure
 
-This monorepo uses [pnpm workspaces](https://pnpm.io/workspaces) to manage multiple packages:
+This monorepo uses [Bun workspaces](https://bun.sh/docs/install/workspaces) to manage multiple packages:
 
 - `apps/*` - Applications
 - `packages/*` - Shared packages

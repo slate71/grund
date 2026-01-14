@@ -49,3 +49,6 @@ temp/
 # Package manager files
 .pnpm-debug.log
 .yarn/
+
+# Misc files
+cspell.json

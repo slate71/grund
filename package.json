@@ -5,17 +5,16 @@
   "description": "Everything as code monorepo for portfolio operations",
   "author": "Lukas Andersen",
   "license": "MIT",
-  "engines": {
-    "node": ">=18.0.0",
-    "pnpm": ">=9.0.0"
-  },
-  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "echo 'No dev script configured yet'",
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck"
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter '*' test",
+    "lint": "bun run --filter '*' lint",
+    "typecheck": "bun run --filter '*' typecheck"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
