@@ -10,7 +10,7 @@ function parseSSELine(line: string): StreamEvent | null {
 
 // Process ReadableStream chunks, splitting on newlines
 export async function* parseStream(
-  stream: ReadableStream<Uint8Array>
+  stream: ReadableStream<Uint8Array>,
 ): AsyncGenerator<StreamEvent, void, unknown> {
   const reader = stream.getReader()
   const decoder = new TextDecoder()
