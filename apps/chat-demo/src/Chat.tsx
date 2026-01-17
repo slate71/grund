@@ -11,13 +11,17 @@ export function Chat() {
   const [currentStreamText, setCurrentStreamText] = useState('')
 
   const sendMessage = async (text: string) => {
+    if (!text.trim()) return
+
+    setInput('')
+
     // Add user message
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
       content: text,
     }
-    setMessages((prev: ChatMessage[]) => [...prev, userMsg])
+    setMessages((prev) => [...prev, userMsg])
 
     // Initialize accumulator for this response
     const accumulator = new PartAccumulator()
@@ -50,11 +54,11 @@ export function Chat() {
         content: accumulator.getCombinedText(),
         isStreaming: false,
       }
-      setMessages((prev: ChatMessage[]) => [...prev, assistantMsg])
+      setMessages((prev) => [...prev, assistantMsg])
     } catch (error) {
       console.error('Stream error:', error)
       // Add error message
-      setMessages((prev: ChatMessage[]) => [
+      setMessages((prev) => [
         ...prev,
         {
           id: `error-${Date.now()}`,
@@ -71,13 +75,13 @@ export function Chat() {
   return (
     <div className="chat">
       <div className="messages">
-        {messages.map((msg: ChatMessage) => (
-          <div key={msg.id} className={`message ${msg.role}`} role={msg.role}>
+        {messages.map((msg) => (
+          <div key={msg.id} className={`message ${msg.role}`}>
             <span className="message-content">{msg.content}</span>
           </div>
         ))}
         {isStreaming && (
-          <div className="message assistant streaming" key={`streaming-${Date.now()}`}>
+          <div className="message assistant streaming" key="streaming-message">
             {currentStreamText || '...'}
             <span className="streaming-cursor">|</span>
           </div>
