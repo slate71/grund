@@ -20,4 +20,4 @@
  * For development, you can use a simple Node.js server or proxy to a real endpoint.
  * The frontend code expects this exact SSE format.
  */
-export const MOCK_ENDPOINT = '/api/chat';
+export const MOCK_ENDPOINT = '/api/chat'
