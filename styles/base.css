@@ -14,10 +14,10 @@
   --color-primary-400: oklch(0.64 0.16 250);
   --color-primary-500: oklch(0.55 0.18 250);
   --color-primary-600: oklch(0.47 0.18 250);
-  --color-primary-700: oklch(0.40 0.16 250);
+  --color-primary-700: oklch(0.4 0.16 250);
   --color-primary-800: oklch(0.34 0.12 250);
   --color-primary-900: oklch(0.28 0.08 250);
-  --color-primary-950: oklch(0.20 0.06 250);
+  --color-primary-950: oklch(0.2 0.06 250);
 
   /* Neutral - for text, backgrounds, borders */
   --color-neutral-50: oklch(0.98 0.005 260);
@@ -25,19 +25,19 @@
   --color-neutral-200: oklch(0.91 0.005 260);
   --color-neutral-300: oklch(0.84 0.005 260);
   --color-neutral-400: oklch(0.65 0.005 260);
-  --color-neutral-500: oklch(0.50 0.005 260);
-  --color-neutral-600: oklch(0.40 0.005 260);
+  --color-neutral-500: oklch(0.5 0.005 260);
+  --color-neutral-600: oklch(0.4 0.005 260);
   --color-neutral-700: oklch(0.32 0.01 260);
   --color-neutral-800: oklch(0.24 0.01 260);
   --color-neutral-900: oklch(0.18 0.01 260);
   --color-neutral-950: oklch(0.12 0.01 260);
 
   /* Status colors for alerts, badges, indicators */
-  --color-success-500: oklch(0.60 0.18 145);
+  --color-success-500: oklch(0.6 0.18 145);
   --color-success-600: oklch(0.52 0.16 145);
   --color-warning-500: oklch(0.75 0.18 85);
   --color-warning-600: oklch(0.65 0.16 85);
-  --color-error-500: oklch(0.60 0.20 25);
+  --color-error-500: oklch(0.6 0.2 25);
   --color-error-600: oklch(0.52 0.18 25);
   --color-info-500: oklch(0.65 0.15 220);
   --color-info-600: oklch(0.55 0.14 220);

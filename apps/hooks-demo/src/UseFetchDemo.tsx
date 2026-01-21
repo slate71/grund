@@ -7,5 +7,5 @@ export function UseFetchDemo() {
       <h2>useFetch Hook Demo</h2>
       <p>Hook implementation coming soon...</p>
     </div>
-  );
+  )
 }

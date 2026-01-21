@@ -3,6 +3,8 @@ import tseslint from 'typescript-eslint'
 import reactHooks from 'eslint-plugin-react-hooks'
 import react from 'eslint-plugin-react'
 import globals from 'globals'
+import prettier from 'eslint-config-prettier'
+import prettierPlugin from 'eslint-plugin-prettier'
 
 export default tseslint.config(
   js.configs.recommended,
@@ -12,6 +14,7 @@ export default tseslint.config(
     plugins: {
       react,
       'react-hooks': reactHooks,
+      prettier: prettierPlugin,
     },
     languageOptions: {
       globals: {
@@ -32,8 +35,10 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      'prettier/prettier': 'error', // Run Prettier as an ESLint rule
     },
   },
+  prettier, // Disables ESLint rules that conflict with Prettier
   {
     ignores: ['**/dist/**', '**/node_modules/**', '**/*.config.js'],
   },

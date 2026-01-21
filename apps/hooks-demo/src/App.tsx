@@ -1,4 +1,4 @@
-import { UseFetchDemo } from './UseFetchDemo';
+import { UseFetchDemo } from './UseFetchDemo'
 
 export function App() {
   return (
@@ -6,5 +6,5 @@ export function App() {
       <h1>React Hooks Interview Challenges</h1>
       <UseFetchDemo />
     </div>
-  );
+  )
 }
