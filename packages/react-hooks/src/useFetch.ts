@@ -9,29 +9,40 @@ type FetchResult<T> = {
   isSuccess: boolean
 }
 
-export const useFetch = <T>(url: string | URL | Request): FetchResult<T> => {
-  const [data, setData] = useState()
-  const [error, setError] = useState()
+export const useFetch = <T>(url: string): FetchResult<T> => {
+  const [data, setData] = useState<T | undefined>()
+  const [error, setError] = useState<Error | undefined>()
   const [isLoading, setIsLoading] = useState(false)
   const [isError, setIsError] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  setIsLoading(true)
-
   useEffect(() => {
-    fetch(url)
-      .then((res) => res.json())
-      .then((d) => {
-        setData(d)
+    const fetchData = async () => {
+      setIsLoading(true)
+      setData(undefined)
+      setError(undefined)
+
+      try {
+        const result = await fetch(url)
+
+        if (!result.ok) {
+          throw new Error(`HTTP error! status: ${result.status} ${result.statusText}`)
+        }
+
+        const data = await result.json()
+        setData(data)
         setIsSuccess(true)
         setIsError(false)
-      })
-      .catch((err) => {
-        setError(err)
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error(String(err)))
         setIsSuccess(false)
         setIsError(true)
-      })
-      .finally(() => setIsLoading(false))
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
   }, [url])
 
   return {
