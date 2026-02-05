@@ -1,0 +1,20 @@
+{
+  "name": "@grund/agents",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "AI agents for business operations automation",
+  "exports": {
+    "./career-ops": "./career-ops/data/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@grund/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

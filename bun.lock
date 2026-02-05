@@ -41,6 +41,17 @@
         "vite": "^5.0.0",
       },
     },
+    "packages/agents": {
+      "name": "@grund/agents",
+      "version": "0.0.1",
+      "dependencies": {
+        "@grund/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.0.0",
+        "typescript": "^5.6.0",
+      },
+    },
     "packages/api": {
       "name": "@grund/api",
       "version": "0.0.1",
@@ -239,6 +250,8 @@
     "@fastify/merge-json-schemas": ["@fastify/merge-json-schemas@0.2.1", "", { "dependencies": { "dequal": "^2.0.3" } }, "sha512-OA3KGBCy6KtIvLf8DINC5880o5iBlDX4SxzLQS8HorJAbqluzLRn80UXU0bxZn7UOFhFgpRJDasfwn9nG4FG4A=="],
 
     "@fastify/proxy-addr": ["@fastify/proxy-addr@5.1.0", "", { "dependencies": { "@fastify/forwarded": "^3.0.0", "ipaddr.js": "^2.1.0" } }, "sha512-INS+6gh91cLUjB+PVHfu1UqcB76Sqtpyp7bnL+FYojhjygvOPA9ctiD/JDKsyD9Xgu4hUhCSJBPig/w7duNajw=="],
+
+    "@grund/agents": ["@grund/agents@workspace:packages/agents"],
 
     "@grund/api": ["@grund/api@workspace:packages/api"],
 

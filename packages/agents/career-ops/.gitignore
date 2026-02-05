@@ -1,0 +1,22 @@
+# Sensitive data files - keep templates, ignore actual data
+data/pipeline.local.json
+data/network.local.json
+data/private/
+
+# Agent runtime
+.agent-state/
+.agent-logs/
+
+# Environment variables
+.env.local
+.env
+
+# Notes and personal data
+notes/
+personal/
+contacts/
+
+# Backup files
+*.backup
+*.bak
+*~
