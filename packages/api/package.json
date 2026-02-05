@@ -1,0 +1,24 @@
+{
+  "name": "@grund/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "seed": "bun src/seed.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@grund/db": "workspace:*",
+    "@grund/shared": "workspace:*",
+    "fastify": "^5.2.0",
+    "@fastify/cors": "^11.0.0",
+    "drizzle-orm": "^0.39.0",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0"
+  }
+}
