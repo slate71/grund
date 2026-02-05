@@ -11,9 +11,11 @@
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "push": "drizzle-kit push",
-    "studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@grund/shared": "workspace:*",
     "drizzle-orm": "^0.39.0",
     "postgres": "^3.4.5"
   },

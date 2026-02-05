@@ -30,8 +30,17 @@ export interface Classification {
   created_at: string
 }
 
-export interface EventWithClassification extends Event {
-  classification: Classification | null
+export interface EventWithClassification {
+  id: string
+  source: string
+  conversation_id: string
+  messages: Message[]
+  metadata: EventMetadata | Record<string, unknown> | null
+  created_at: Date | string
+  outcome?: Outcome | null
+  confidence?: number | null
+  reason?: string | null
+  signals?: string[] | null
 }
 
 export interface CreateEventBody {
@@ -58,8 +67,9 @@ export interface EventsQuery {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[]
+  items: T[]
   total: number
+  totalPages: number
   page: number
   limit: number
 }

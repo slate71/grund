@@ -1,7 +1,7 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import { createDb } from '@grund/db'
-import { registerRoutes } from './routes'
+import { registerRoutes } from './routes/index'
 
 const port = parseInt(process.env.PORT || '3001', 10)
 const databaseUrl = process.env.DATABASE_URL

@@ -52,3 +52,9 @@ temp/
 
 # Misc files
 cspell.json
+
+# Client workspaces - keep these private
+/clients/*
+!/clients/.gitkeep
+!/clients/README.md
+!/clients/_template/

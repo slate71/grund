@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "grund",
@@ -24,33 +23,20 @@
         "vitest": "^4.0.17",
       },
     },
-    "apps/chat-demo": {
-      "name": "@grund/chat-demo",
-      "version": "0.0.0",
+    "apps/dashboard": {
+      "name": "@grund/dashboard",
+      "version": "0.0.1",
       "dependencies": {
+        "@grund/shared": "workspace:*",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
       },
       "devDependencies": {
+        "@tailwindcss/vite": "^4.1.18",
         "@types/react": "^18.2.0",
         "@types/react-dom": "^18.2.0",
         "@vitejs/plugin-react": "^4.2.0",
-        "typescript": "^5.6.0",
-        "vite": "^5.0.0",
-      },
-    },
-    "apps/hooks-demo": {
-      "name": "@grund/hooks-demo",
-      "version": "0.0.0",
-      "dependencies": {
-        "@grund/react-hooks": "workspace:*",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-      },
-      "devDependencies": {
-        "@types/react": "^18.2.0",
-        "@types/react-dom": "^18.2.0",
-        "@vitejs/plugin-react": "^4.2.0",
+        "tailwindcss": "^4.1.18",
         "typescript": "^5.6.0",
         "vite": "^5.0.0",
       },
@@ -67,11 +53,15 @@
         "fastify": "^5.2.0",
         "postgres": "^3.4.5",
       },
+      "devDependencies": {
+        "@types/node": "^25.2.0",
+      },
     },
     "packages/db": {
       "name": "@grund/db",
       "version": "0.0.1",
       "dependencies": {
+        "@grund/shared": "workspace:*",
         "drizzle-orm": "^0.39.0",
         "postgres": "^3.4.5",
       },
@@ -93,24 +83,6 @@
     "packages/shared": {
       "name": "@grund/shared",
       "version": "0.0.1",
-    },
-    "packages/web": {
-      "name": "@grund/web",
-      "version": "0.0.1",
-      "dependencies": {
-        "@grund/shared": "workspace:*",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-      },
-      "devDependencies": {
-        "@tailwindcss/vite": "^4.1.18",
-        "@types/react": "^18.2.0",
-        "@types/react-dom": "^18.2.0",
-        "@vitejs/plugin-react": "^4.2.0",
-        "tailwindcss": "^4.1.18",
-        "typescript": "^5.6.0",
-        "vite": "^5.0.0",
-      },
     },
   },
   "packages": {
@@ -270,17 +242,13 @@
 
     "@grund/api": ["@grund/api@workspace:packages/api"],
 
-    "@grund/chat-demo": ["@grund/chat-demo@workspace:apps/chat-demo"],
+    "@grund/dashboard": ["@grund/dashboard@workspace:apps/dashboard"],
 
     "@grund/db": ["@grund/db@workspace:packages/db"],
-
-    "@grund/hooks-demo": ["@grund/hooks-demo@workspace:apps/hooks-demo"],
 
     "@grund/react-hooks": ["@grund/react-hooks@workspace:packages/react-hooks"],
 
     "@grund/shared": ["@grund/shared@workspace:packages/shared"],
-
-    "@grund/web": ["@grund/web@workspace:packages/web"],
 
     "@humanfs/core": ["@humanfs/core@0.19.1", "", {}, "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA=="],
 
@@ -1184,6 +1152,8 @@
 
     "@fastify/ajv-compiler/ajv": ["ajv@8.17.1", "", { "dependencies": { "fast-deep-equal": "^3.1.3", "fast-uri": "^3.0.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2" } }, "sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g=="],
 
+    "@grund/api/@types/node": ["@types/node@25.2.0", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-DZ8VwRFUNzuqJ5khrvwMXHmvPe+zGayJhr2CDNiKB1WBE1ST8Djl00D0IC4vvNmHMdj6DlbYRIaFE7WHjlDl5w=="],
+
     "@tailwindcss/oxide-wasm32-wasi/@emnapi/core": ["@emnapi/core@1.8.1", "", { "dependencies": { "@emnapi/wasi-threads": "1.1.0", "tslib": "^2.4.0" }, "bundled": true }, "sha512-AvT9QFpxK0Zd8J0jopedNm+w/2fIzvtPKPjqyw9jwvBaReTTqPBk9Hixaz7KbjimP+QNz605/XnjFcDAL2pqBg=="],
 
     "@tailwindcss/oxide-wasm32-wasi/@emnapi/runtime": ["@emnapi/runtime@1.8.1", "", { "dependencies": { "tslib": "^2.4.0" }, "bundled": true }, "sha512-mehfKSMWjjNol8659Z8KxEMrdSJDDot5SXMq00dM8BN4o+CLNXQ0xH2V7EchNHV4RmbZLmmPdEaXZc5H2FXmDg=="],
@@ -1271,6 +1241,8 @@
     "@esbuild-kit/core-utils/esbuild/@esbuild/win32-x64": ["@esbuild/win32-x64@0.18.20", "", { "os": "win32", "cpu": "x64" }, "sha512-kTdfRcSiDfQca/y9QIkng02avJ+NCaQvrMejlsB3RRv5sE9rRoeBPISaZpKxHELzRxZyLvNts1P27W3wV+8geQ=="],
 
     "@fastify/ajv-compiler/ajv/json-schema-traverse": ["json-schema-traverse@1.0.0", "", {}, "sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug=="],
+
+    "@grund/api/@types/node/undici-types": ["undici-types@7.16.0", "", {}, "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw=="],
 
     "@typescript-eslint/typescript-estree/minimatch/brace-expansion": ["brace-expansion@2.0.2", "", { "dependencies": { "balanced-match": "^1.0.0" } }, "sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ=="],
 

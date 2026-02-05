@@ -11,9 +11,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "bun run --filter '@grund/api' dev & bun run --filter '@grund/web' dev",
+    "dev": "bun run --filter '@grund/api' dev & bun run --filter '@grund/dashboard' dev",
     "dev:api": "bun run --filter '@grund/api' dev",
-    "dev:web": "bun run --filter '@grund/web' dev",
+    "dev:dashboard": "bun run --filter '@grund/dashboard' dev",
     "db:generate": "bun run --filter '@grund/db' generate",
     "db:migrate": "bun run --filter '@grund/db' migrate",
     "db:push": "bun run --filter '@grund/db' push",
