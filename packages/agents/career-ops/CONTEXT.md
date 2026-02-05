@@ -4,8 +4,7 @@ monthly_burn: 0  # TODO: Fill with actual value
 pipeline_count: 0  # TODO: Fill with actual value
 current_streak:
   commits: 0
-  posts: 0
-  dms: 0
+  outreach: 0
 last_updated: 2026-02-05
 ---
 
@@ -90,25 +89,27 @@ Be known as the engineer who makes AI agents reliable and useful for complex rea
 3. **Complex task automation**: Breaking down real-world workflows for AI
 4. **Career transparency**: Building agentic systems in public
 
-**Content Mix**
-- 60% teach/opinion pieces
-- 20% technical demos
-- 20% journey updates
-
-**Rotation Rule**
-Never repeat the same thread two days in a row
+**Content Strategy**
+- Focus: GitHub repos and technical blogs
+- Frequency: When there's something real to share
+- Platforms: GitHub, Twitter/X, personal blog (not LinkedIn)
+- Rule: Show work, not thoughts
 
 ## Daily System
 
 **Non-Negotiables**
-- [ ] One meaningful commit to Grund
-- [ ] One LinkedIn post (rotate threads)
-- [ ] One targeted DM
+- [ ] One meaningful commit to Grund (build impressive things)
+- [ ] One targeted outreach (email/DM/apply)
 
-**DM Priority**
+**Weekly**
+- [ ] Technical blog post or detailed Twitter/X thread (if meaningful progress)
+- [ ] Review and update pipeline
+
+**Outreach Priority**
 1. Overdue follow-ups
-2. Warm leads going cold
-3. New high-signal targets
+2. Direct applications to high-signal roles
+3. Warm intros from network
+4. Cold outreach to target companies
 
 **Recovery Rule**
 Never skip two days in a row on any action
