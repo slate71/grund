@@ -14,7 +14,7 @@ last_updated: 2026-02-05
 
 **Core Identity**
 - Building reliable agentic systems for complex real-world workflows
-- Full-stack engineer with 5 years leading/managing engineering teams
+- Full-stack engineer with over 10 years of experience and 5 years leading/managing engineering teams
 - Deep expertise: Agent orchestration, human-in-the-loop systems, interpretable AI interfaces
 - Thesis: AI agents can handle complex operational tasks with appropriate human oversight
 
