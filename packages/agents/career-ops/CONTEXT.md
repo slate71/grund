@@ -90,16 +90,14 @@ Be known as the engineer who makes AI agents reliable and useful for complex rea
 4. **Career transparency**: Building agentic systems in public
 
 **Content Strategy**
-- Focus: GitHub repos and technical blogs
-- Frequency: When there's something real to share
-- Platforms: GitHub, Twitter/X, personal blog (not LinkedIn)
+- Focus: GitHub repos and contributions
 - Rule: Show work, not thoughts
 
 ## Daily System
 
 **Non-Negotiables**
 - [ ] One meaningful commit to Grund (build impressive things)
-- [ ] One targeted outreach (email/DM/apply)
+- [ ] One targeted outreach (email/apply/intro)
 
 **Weekly**
 - [ ] Technical blog post or detailed Twitter/X thread (if meaningful progress)

@@ -58,8 +58,8 @@ interface BriefingSection {
 }
 
 interface BriefingOutput {
-  dmTarget: string
-  postAngle: string
+  outreachTarget: string
+  githubTarget: string
   commitTarget: string
   pipelineSnapshot: string
   streakStatus: string
@@ -180,13 +180,14 @@ function buildPrompt(
 
 Output exactly 6 sections in this format:
 
-## DM Target
+## Outreach Target
 Who to reach out to today, why now, and a draft message.
+Channels: email, direct application, or intro request. No DMs.
 Priority: overdue follow-ups > warm leads going cold > new high-signal targets.
 
-## Post Angle
-A specific content topic tied to thesis threads from the context.
-Factor in what's due for a revisit and what connects to current work.
+## GitHub Target
+What to build or ship on GitHub today, tied to thesis threads from the context.
+Focus on repos and contributions that show work, not thoughts.
 
 ## Commit Target
 The single most important thing to ship in Grund today.
@@ -206,8 +207,8 @@ Rules:
 - Be direct and specific - no fluff
 - Every item must be actionable today
 - Flag any missing or stale data
-- DM drafts should be personal and specific
-- Post angles should demonstrate technical depth
+- Outreach messages should be personal and specific
+- GitHub targets should demonstrate technical depth
 - If Linear or Calendar data is missing, work with what you have`
 
   const user = `Today: ${dayOfWeek}, ${dateStr}
@@ -294,8 +295,8 @@ async function generateBriefing(
     // Parse sections from the response with better error handling
     const sections = text.split('## ').filter(s => s.trim())
     const briefing: BriefingOutput = {
-    dmTarget: '',
-    postAngle: '',
+    outreachTarget: '',
+    githubTarget: '',
     commitTarget: '',
     pipelineSnapshot: '',
     streakStatus: '',
@@ -304,8 +305,8 @@ async function generateBriefing(
 
     // Map sections more robustly
     const sectionMap: Record<string, keyof BriefingOutput> = {
-      'DM Target': 'dmTarget',
-      'Post Angle': 'postAngle',
+      'Outreach Target': 'outreachTarget',
+      'GitHub Target': 'githubTarget',
       'Commit Target': 'commitTarget',
       'Pipeline Snapshot': 'pipelineSnapshot',
       'Streak Status': 'streakStatus',
@@ -358,11 +359,11 @@ function displayBriefing(briefing: BriefingOutput): void {
   console.log(`📋 DAILY BRIEFING - ${today}`)
   console.log(separator)
 
-  console.log('\n## 💬 DM TARGET')
-  console.log(briefing.dmTarget)
+  console.log('\n## 📧 OUTREACH TARGET')
+  console.log(briefing.outreachTarget)
 
-  console.log('\n## 📝 POST ANGLE')
-  console.log(briefing.postAngle)
+  console.log('\n## 🔨 GITHUB TARGET')
+  console.log(briefing.githubTarget)
 
   console.log('\n## 💻 COMMIT TARGET')
   console.log(briefing.commitTarget)

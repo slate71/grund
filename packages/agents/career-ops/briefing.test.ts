@@ -136,8 +136,8 @@ describe('Briefing Engine', () => {
 
       // Check system prompt
       expect(system).toContain('career operations assistant')
-      expect(system).toContain('## DM Target')
-      expect(system).toContain('## Post Angle')
+      expect(system).toContain('## Outreach Target')
+      expect(system).toContain('## GitHub Target')
       expect(system).toContain('## Commit Target')
       expect(system).toContain('## Pipeline Snapshot')
       expect(system).toContain('## Streak Status')
@@ -311,8 +311,8 @@ describe('Briefing Engine', () => {
 
     it('should format and display briefing correctly', () => {
       const briefing = {
-        dmTarget: 'Reach out to John Smith',
-        postAngle: 'Agent orchestration patterns',
+        outreachTarget: 'Email John Smith about the Staff Engineer role',
+        githubTarget: 'Ship agent orchestration patterns module',
         commitTarget: 'TOG-364 implementation',
         pipelineSnapshot: '2 active opportunities',
         streakStatus: '5 days commits, 3 days outreach',
@@ -323,10 +323,10 @@ describe('Briefing Engine', () => {
 
       const output = consoleOutput.join('\n')
       expect(output).toContain('DAILY BRIEFING')
-      expect(output).toContain('💬 DM TARGET')
-      expect(output).toContain('Reach out to John Smith')
-      expect(output).toContain('📝 POST ANGLE')
-      expect(output).toContain('Agent orchestration patterns')
+      expect(output).toContain('📧 OUTREACH TARGET')
+      expect(output).toContain('Email John Smith about the Staff Engineer role')
+      expect(output).toContain('🔨 GITHUB TARGET')
+      expect(output).toContain('Ship agent orchestration patterns module')
       expect(output).toContain('💻 COMMIT TARGET')
       expect(output).toContain('TOG-364 implementation')
       expect(output).toContain('🔥 STREAK STATUS')
@@ -335,8 +335,8 @@ describe('Briefing Engine', () => {
 
     it('should handle empty briefing sections gracefully', () => {
       const briefing = {
-        dmTarget: '',
-        postAngle: '',
+        outreachTarget: '',
+        githubTarget: '',
         commitTarget: '',
         pipelineSnapshot: '',
         streakStatus: '',
@@ -348,8 +348,8 @@ describe('Briefing Engine', () => {
       const output = consoleOutput.join('\n')
       expect(output).toContain('DAILY BRIEFING')
       // Should still display all section headers even if empty
-      expect(output).toContain('💬 DM TARGET')
-      expect(output).toContain('📝 POST ANGLE')
+      expect(output).toContain('📧 OUTREACH TARGET')
+      expect(output).toContain('🔨 GITHUB TARGET')
       expect(output).toContain('💻 COMMIT TARGET')
     })
   })
