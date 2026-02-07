@@ -8,13 +8,10 @@ import yaml from 'js-yaml'
 import {
   loadPipeline,
   loadNetwork,
-  getOpportunitiesByStage,
   getHighSignalOpportunities,
   getOverdueFollowUps,
   type PipelineData,
   type NetworkData,
-  type Contact,
-  type Opportunity,
 } from './data/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -52,18 +49,13 @@ interface CalendarEvent {
   description?: string
 }
 
-interface BriefingSection {
-  title: string
-  content: string
-}
-
 interface BriefingOutput {
-  dmTarget: string
-  postAngle: string
+  outreachTarget: string
   commitTarget: string
   pipelineSnapshot: string
   streakStatus: string
   calendarContext: string
+  weeklyReview: string
 }
 
 interface BriefingConfig {
@@ -176,17 +168,31 @@ function buildPrompt(
     stageCount[opp.stage] = (stageCount[opp.stage] || 0) + 1
   })
 
-  const system = `You are a career operations assistant producing a daily morning briefing for a senior engineer seeking their next role. The briefing must be actionable, specific, and focused on today's priorities.
+  const isWeeklyReviewDay = dayOfWeek === 'Monday' || dayOfWeek === 'Friday'
+
+  const system = `You are a career operations assistant producing a daily morning briefing for a Staff+ full-stack/systems engineer building reliable agentic systems for complex real-world workflows. 10+ years experience, 5 years leading teams. Deep expertise in agent orchestration, human-in-the-loop systems, and interpretable AI interfaces. The briefing must be actionable, specific, and focused on today's priorities.
+
+Target: Staff+ Engineer at Seed to Series C companies in AI platforms, agentic systems, complex task automation. $275-350K+.
+
+Positioning: Be known as the engineer who makes AI agents reliable and useful for complex real-world tasks.
+
+Daily non-negotiables (must both happen every day):
+1. One meaningful commit to Grund (build impressive things)
+2. One targeted outreach (email/DM/apply)
+
+Recovery rule: Never skip two days in a row on any action. If a streak is at 0, today is CRITICAL.
 
 Output exactly 6 sections in this format:
 
-## DM Target
+## Outreach Target
 Who to reach out to today, why now, and a draft message.
-Priority: overdue follow-ups > warm leads going cold > new high-signal targets.
+Priority order (follow this exactly):
+1. Overdue follow-ups
+2. Direct applications to high-signal roles
+3. Warm intros from network
+4. Cold outreach to target companies
 
-## Post Angle
-A specific content topic tied to thesis threads from the context.
-Factor in what's due for a revisit and what connects to current work.
+Target personas: Founders at AI companies, VCs focused on developer tools, VPs of Engineering at Series A-C, Staff+ engineers at target companies.
 
 ## Commit Target
 The single most important thing to ship in Grund today.
@@ -194,21 +200,38 @@ Pull from Linear priorities if available. Name the specific issue.
 
 ## Pipeline Snapshot
 Active opportunities by stage, anything needing action, stage changes.
+Stages: identified → researched → outreach → conversation → interview → offer → closed.
 
 ## Streak Status
 Current consecutive days for commits and outreach.
-Flag if at risk. Enforce "never skip two."
+If either streak is at 0, flag as CRITICAL — the recovery rule means today cannot be skipped.
+If either streak is at 1, flag as AT RISK.
 
 ## Calendar Context
 Today's events that affect the plan. Flag conflicts or deep work windows.
 
+## Weekly Review
+${isWeeklyReviewDay
+  ? `Today is ${dayOfWeek} — weekly review items are due:
+- Review and update pipeline stages
+- Assess network tier transitions
+- If meaningful progress was made: write a technical blog post or detailed Twitter/X thread
+Content strategy: Show work, not thoughts. GitHub repos and technical blogs only (not LinkedIn).
+Thesis threads: Reliable agent architecture, Human-AI collaboration, Complex task automation, Career transparency.`
+  : `Not a review day. Only surface if there is something time-sensitive for weekly items (e.g., content opportunity tied to current work).
+Content frequency: Only when there is something real to share.`}
+
 Rules:
-- Be direct and specific - no fluff
+- Be direct and specific — no fluff
 - Every item must be actionable today
 - Flag any missing or stale data
-- DM drafts should be personal and specific
-- Post angles should demonstrate technical depth
+- Outreach drafts should be personal and specific to the recipient
 - If Linear or Calendar data is missing, work with what you have`
+
+  // Contacts with upcoming or overdue next_touch, sorted by urgency
+  const actionableContacts = network.contacts
+    .filter(c => c.next_touch)
+    .sort((a, b) => (a.next_touch || '').localeCompare(b.next_touch || ''))
 
   const user = `Today: ${dayOfWeek}, ${dateStr}
 
@@ -226,32 +249,35 @@ By stage: ${JSON.stringify(stageCount, null, 2)}
 High signal (7+): ${highSignalOps.map(o => `${o.company} - ${o.role}`).join(', ') || 'None'}
 
 TOP OPPORTUNITIES:
-${highSignalOps.slice(0, 3).map(opp =>
-  `- ${opp.company} (${opp.role}): Stage=${opp.stage}, Signal=${opp.signal_strength}, Last=${opp.last_action.date}`
+${highSignalOps.slice(0, 5).map(opp =>
+  `- ${opp.company} (${opp.role}): Stage=${opp.stage}, Signal=${opp.signal_strength}, Last=${opp.last_action.date}${opp.next_action ? `, Next=${opp.next_action.date}: ${opp.next_action.task}` : ''}`
 ).join('\n') || 'No high-signal opportunities'}
 
 OVERDUE FOLLOW-UPS:
 ${overdueContacts.length > 0
-  ? overdueContacts.map(c => `- ${c.name} (${c.company}): Due ${c.next_touch}`).join('\n')
+  ? overdueContacts.map(c => `- ${c.name} (${c.company}, ${c.relationship}): Due ${c.next_touch}${c.context ? ` — ${c.context}` : ''}`).join('\n')
   : 'None overdue'}
+
+UPCOMING TOUCHES:
+${actionableContacts.filter(c => !overdueContacts.includes(c)).slice(0, 5).map(c =>
+  `- ${c.name} (${c.company}, ${c.relationship}): ${c.next_touch}${c.context ? ` — ${c.context}` : ''}`
+).join('\n') || 'None scheduled'}
 
 NETWORK CONTEXT:
 Total contacts: ${network.contacts.length}
-Warm contacts: ${network.contacts.filter(c => c.relationship === 'warm').length}
-Active conversations: ${network.contacts.filter(c => c.relationship === 'active').length}
-Advocates: ${network.contacts.filter(c => c.relationship === 'advocate').length}
+By tier: Target=${network.contacts.filter(c => c.relationship === 'target').length}, Warm=${network.contacts.filter(c => c.relationship === 'warm').length}, Active=${network.contacts.filter(c => c.relationship === 'active').length}, Advocate=${network.contacts.filter(c => c.relationship === 'advocate').length}
 
 ${linearIssues ? `LINEAR ISSUES:
-${linearIssues.map(i => `- [${i.priority}] ${i.title} (${i.state})`).join('\n')}` : 'LINEAR: Not available'}
+${linearIssues.map(i => `- [${i.priority}] ${i.title} (${i.state})${i.dueDate ? ` due ${i.dueDate}` : ''}`).join('\n')}` : 'LINEAR: Not available'}
 
 ${calendarEvents ? `CALENDAR TODAY:
-${calendarEvents.map(e => `- ${e.startTime}: ${e.title}`).join('\n')}` : 'CALENDAR: Not available'}
+${calendarEvents.map(e => `- ${e.startTime}-${e.endTime}: ${e.title}${e.description ? ` (${e.description})` : ''}`).join('\n')}` : 'CALENDAR: Not available'}
 
 FULL PIPELINE DATA:
 ${JSON.stringify(activeOpportunities.slice(0, 5), null, 2)}
 
-IDENTITY & POSITIONING (from context):
-${context.body.split('\n').slice(12, 30).join('\n')}`
+FULL CONTEXT:
+${context.body}`
 
   return { system, user }
 }
@@ -294,22 +320,22 @@ async function generateBriefing(
     // Parse sections from the response with better error handling
     const sections = text.split('## ').filter(s => s.trim())
     const briefing: BriefingOutput = {
-    dmTarget: '',
-    postAngle: '',
+    outreachTarget: '',
     commitTarget: '',
     pipelineSnapshot: '',
     streakStatus: '',
     calendarContext: '',
+    weeklyReview: '',
   }
 
     // Map sections more robustly
     const sectionMap: Record<string, keyof BriefingOutput> = {
-      'DM Target': 'dmTarget',
-      'Post Angle': 'postAngle',
+      'Outreach Target': 'outreachTarget',
       'Commit Target': 'commitTarget',
       'Pipeline Snapshot': 'pipelineSnapshot',
       'Streak Status': 'streakStatus',
       'Calendar Context': 'calendarContext',
+      'Weekly Review': 'weeklyReview',
     }
 
     sections.forEach(section => {
@@ -358,11 +384,8 @@ function displayBriefing(briefing: BriefingOutput): void {
   console.log(`📋 DAILY BRIEFING - ${today}`)
   console.log(separator)
 
-  console.log('\n## 💬 DM TARGET')
-  console.log(briefing.dmTarget)
-
-  console.log('\n## 📝 POST ANGLE')
-  console.log(briefing.postAngle)
+  console.log('\n## 💬 OUTREACH TARGET')
+  console.log(briefing.outreachTarget)
 
   console.log('\n## 💻 COMMIT TARGET')
   console.log(briefing.commitTarget)
@@ -375,6 +398,9 @@ function displayBriefing(briefing: BriefingOutput): void {
 
   console.log('\n## 📅 CALENDAR CONTEXT')
   console.log(briefing.calendarContext)
+
+  console.log('\n## 📋 WEEKLY REVIEW')
+  console.log(briefing.weeklyReview)
 
   console.log(`\n${separator}\n`)
 }

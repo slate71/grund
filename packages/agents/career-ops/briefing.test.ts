@@ -134,14 +134,25 @@ describe('Briefing Engine', () => {
         null
       )
 
-      // Check system prompt
+      // Check system prompt reflects CONTEXT.md positioning
       expect(system).toContain('career operations assistant')
-      expect(system).toContain('## DM Target')
-      expect(system).toContain('## Post Angle')
+      expect(system).toContain('Staff+ full-stack/systems engineer')
+      expect(system).toContain('agentic systems')
+      expect(system).toContain('## Outreach Target')
       expect(system).toContain('## Commit Target')
       expect(system).toContain('## Pipeline Snapshot')
       expect(system).toContain('## Streak Status')
       expect(system).toContain('## Calendar Context')
+      expect(system).toContain('## Weekly Review')
+
+      // Check outreach priority matches CONTEXT.md
+      expect(system).toContain('Overdue follow-ups')
+      expect(system).toContain('Direct applications to high-signal roles')
+      expect(system).toContain('Warm intros from network')
+      expect(system).toContain('Cold outreach to target companies')
+
+      // Check recovery rule
+      expect(system).toContain('Never skip two days in a row')
 
       // Check user prompt
       expect(user).toContain('Runway: 90 days')
@@ -150,6 +161,13 @@ describe('Briefing Engine', () => {
       expect(user).toContain('Active opportunities: 2')
       expect(user).toContain('Acme Corp')
       expect(user).toContain('John Smith')
+
+      // Check full context body is passed (not a hardcoded slice)
+      expect(user).toContain('FULL CONTEXT:')
+      expect(user).toContain('Identity & Positioning')
+
+      // Check network tiers are broken out
+      expect(user).toContain('By tier:')
     })
 
     it('should handle missing Linear and Calendar data', () => {
@@ -207,7 +225,7 @@ describe('Briefing Engine', () => {
       )
 
       expect(user).toContain('CALENDAR TODAY:')
-      expect(user).toContain('10:00 AM: Team standup')
+      expect(user).toContain('10:00 AM-10:30 AM: Team standup (Daily sync)')
     })
 
     it('should identify overdue follow-ups', () => {
@@ -220,7 +238,7 @@ describe('Briefing Engine', () => {
       )
 
       expect(user).toContain('OVERDUE FOLLOW-UPS:')
-      expect(user).toContain('John Smith (Acme Corp): Due 2026-02-03')
+      expect(user).toContain('John Smith (Acme Corp, warm): Due 2026-02-03')
     })
 
     it('should include high-signal opportunities', () => {
@@ -234,6 +252,49 @@ describe('Briefing Engine', () => {
 
       expect(user).toContain('High signal (7+): Acme Corp - Senior Engineer')
       expect(user).toContain('Stage=conversation, Signal=8')
+    })
+
+    it('should include streak recovery rule in system prompt', () => {
+      const { system } = buildPrompt(
+        mockContext,
+        mockPipelineData,
+        mockNetworkData,
+        null,
+        null
+      )
+
+      // CONTEXT.md: streak at 0 means yesterday was skipped, today is critical
+      expect(system).toContain('streak is at 0')
+      expect(system).toContain('CRITICAL')
+    })
+
+    it('should include target personas from CONTEXT.md', () => {
+      const { system } = buildPrompt(
+        mockContext,
+        mockPipelineData,
+        mockNetworkData,
+        null,
+        null
+      )
+
+      expect(system).toContain('Founders at AI companies')
+      expect(system).toContain('VCs focused on developer tools')
+      expect(system).toContain('VPs of Engineering at Series A-C')
+      expect(system).toContain('Staff+ engineers at target companies')
+    })
+
+    it('should pass full context body instead of hardcoded slice', () => {
+      const { user } = buildPrompt(
+        mockContext,
+        mockPipelineData,
+        mockNetworkData,
+        null,
+        null
+      )
+
+      expect(user).toContain('FULL CONTEXT:')
+      // Should contain the actual body text, not just a slice
+      expect(user).toContain('Building reliable agentic systems')
     })
 
     it('should handle empty pipeline and network data', () => {
@@ -290,6 +351,7 @@ describe('Briefing Engine', () => {
       expect(user).toContain('High signal (7+): None')
       expect(user).toContain('None overdue')
       expect(user).toContain('Total contacts: 0')
+      expect(user).toContain('By tier: Target=0, Warm=0, Active=0, Advocate=0')
     })
   })
 
@@ -311,36 +373,36 @@ describe('Briefing Engine', () => {
 
     it('should format and display briefing correctly', () => {
       const briefing = {
-        dmTarget: 'Reach out to John Smith',
-        postAngle: 'Agent orchestration patterns',
+        outreachTarget: 'Follow up with John Smith at Acme',
         commitTarget: 'TOG-364 implementation',
         pipelineSnapshot: '2 active opportunities',
         streakStatus: '5 days commits, 3 days outreach',
         calendarContext: 'No conflicts',
+        weeklyReview: 'Pipeline review due',
       }
 
       displayBriefing(briefing)
 
       const output = consoleOutput.join('\n')
       expect(output).toContain('DAILY BRIEFING')
-      expect(output).toContain('💬 DM TARGET')
-      expect(output).toContain('Reach out to John Smith')
-      expect(output).toContain('📝 POST ANGLE')
-      expect(output).toContain('Agent orchestration patterns')
+      expect(output).toContain('💬 OUTREACH TARGET')
+      expect(output).toContain('Follow up with John Smith at Acme')
       expect(output).toContain('💻 COMMIT TARGET')
       expect(output).toContain('TOG-364 implementation')
       expect(output).toContain('🔥 STREAK STATUS')
       expect(output).toContain('5 days commits, 3 days outreach')
+      expect(output).toContain('📋 WEEKLY REVIEW')
+      expect(output).toContain('Pipeline review due')
     })
 
     it('should handle empty briefing sections gracefully', () => {
       const briefing = {
-        dmTarget: '',
-        postAngle: '',
+        outreachTarget: '',
         commitTarget: '',
         pipelineSnapshot: '',
         streakStatus: '',
         calendarContext: '',
+        weeklyReview: '',
       }
 
       displayBriefing(briefing)
@@ -348,9 +410,9 @@ describe('Briefing Engine', () => {
       const output = consoleOutput.join('\n')
       expect(output).toContain('DAILY BRIEFING')
       // Should still display all section headers even if empty
-      expect(output).toContain('💬 DM TARGET')
-      expect(output).toContain('📝 POST ANGLE')
+      expect(output).toContain('💬 OUTREACH TARGET')
       expect(output).toContain('💻 COMMIT TARGET')
+      expect(output).toContain('📋 WEEKLY REVIEW')
     })
   })
 })
