@@ -131,7 +131,7 @@ describe('Briefing Engine', () => {
         mockPipelineData,
         mockNetworkData,
         null,
-        null
+        null,
       )
 
       // Check system prompt reflects CONTEXT.md positioning
@@ -171,13 +171,7 @@ describe('Briefing Engine', () => {
     })
 
     it('should handle missing Linear and Calendar data', () => {
-      const { user } = buildPrompt(
-        mockContext,
-        mockPipelineData,
-        mockNetworkData,
-        null,
-        null
-      )
+      const { user } = buildPrompt(mockContext, mockPipelineData, mockNetworkData, null, null)
 
       expect(user).toContain('LINEAR: Not available')
       expect(user).toContain('CALENDAR: Not available')
@@ -199,7 +193,7 @@ describe('Briefing Engine', () => {
         mockPipelineData,
         mockNetworkData,
         linearIssues,
-        null
+        null,
       )
 
       expect(user).toContain('LINEAR ISSUES:')
@@ -221,7 +215,7 @@ describe('Briefing Engine', () => {
         mockPipelineData,
         mockNetworkData,
         null,
-        calendarEvents
+        calendarEvents,
       )
 
       expect(user).toContain('CALENDAR TODAY:')
@@ -229,39 +223,21 @@ describe('Briefing Engine', () => {
     })
 
     it('should identify overdue follow-ups', () => {
-      const { user } = buildPrompt(
-        mockContext,
-        mockPipelineData,
-        mockNetworkData,
-        null,
-        null
-      )
+      const { user } = buildPrompt(mockContext, mockPipelineData, mockNetworkData, null, null)
 
       expect(user).toContain('OVERDUE FOLLOW-UPS:')
       expect(user).toContain('John Smith (Acme Corp, warm): Due 2026-02-03')
     })
 
     it('should include high-signal opportunities', () => {
-      const { user } = buildPrompt(
-        mockContext,
-        mockPipelineData,
-        mockNetworkData,
-        null,
-        null
-      )
+      const { user } = buildPrompt(mockContext, mockPipelineData, mockNetworkData, null, null)
 
       expect(user).toContain('High signal (7+): Acme Corp - Senior Engineer')
       expect(user).toContain('Stage=conversation, Signal=8')
     })
 
     it('should include streak recovery rule in system prompt', () => {
-      const { system } = buildPrompt(
-        mockContext,
-        mockPipelineData,
-        mockNetworkData,
-        null,
-        null
-      )
+      const { system } = buildPrompt(mockContext, mockPipelineData, mockNetworkData, null, null)
 
       // CONTEXT.md: streak at 0 means yesterday was skipped, today is critical
       expect(system).toContain('streak is at 0')
@@ -269,13 +245,7 @@ describe('Briefing Engine', () => {
     })
 
     it('should include target personas from CONTEXT.md', () => {
-      const { system } = buildPrompt(
-        mockContext,
-        mockPipelineData,
-        mockNetworkData,
-        null,
-        null
-      )
+      const { system } = buildPrompt(mockContext, mockPipelineData, mockNetworkData, null, null)
 
       expect(system).toContain('Founders at AI companies')
       expect(system).toContain('VCs focused on developer tools')
@@ -284,13 +254,7 @@ describe('Briefing Engine', () => {
     })
 
     it('should pass full context body instead of hardcoded slice', () => {
-      const { user } = buildPrompt(
-        mockContext,
-        mockPipelineData,
-        mockNetworkData,
-        null,
-        null
-      )
+      const { user } = buildPrompt(mockContext, mockPipelineData, mockNetworkData, null, null)
 
       expect(user).toContain('FULL CONTEXT:')
       // Should contain the actual body text, not just a slice
@@ -339,13 +303,7 @@ describe('Briefing Engine', () => {
         },
       }
 
-      const { user } = buildPrompt(
-        mockContext,
-        emptyPipeline,
-        emptyNetwork,
-        null,
-        null
-      )
+      const { user } = buildPrompt(mockContext, emptyPipeline, emptyNetwork, null, null)
 
       expect(user).toContain('Active opportunities: 0')
       expect(user).toContain('High signal (7+): None')
@@ -363,7 +321,7 @@ describe('Briefing Engine', () => {
     beforeEach(() => {
       consoleOutput = []
       console.log = (...args: any[]) => {
-        consoleOutput.push(args.map(arg => String(arg)).join(' '))
+        consoleOutput.push(args.map((arg) => String(arg)).join(' '))
       }
     })
 

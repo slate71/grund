@@ -102,9 +102,11 @@ function parseContext(config: BriefingConfig = DEFAULT_CONFIG): Context {
     }
 
     // Validate types
-    if (typeof frontmatter.runway_days !== 'number' ||
-        typeof frontmatter.monthly_burn !== 'number' ||
-        typeof frontmatter.pipeline_count !== 'number') {
+    if (
+      typeof frontmatter.runway_days !== 'number' ||
+      typeof frontmatter.monthly_burn !== 'number' ||
+      typeof frontmatter.pipeline_count !== 'number'
+    ) {
       console.warn('Warning: Some frontmatter fields have invalid types, using defaults')
     }
 
@@ -124,7 +126,10 @@ async function fetchLinearIssues(): Promise<LinearIssue[] | null> {
     console.log('Linear integration not available - continuing without Linear data')
     return null
   } catch (error) {
-    console.error('Error fetching Linear issues:', error instanceof Error ? error.message : 'Unknown error')
+    console.error(
+      'Error fetching Linear issues:',
+      error instanceof Error ? error.message : 'Unknown error',
+    )
     console.log('Continuing without Linear data')
     return null
   }
@@ -137,7 +142,10 @@ async function fetchCalendarEvents(): Promise<CalendarEvent[] | null> {
     console.log('Calendar integration not available - continuing without calendar data')
     return null
   } catch (error) {
-    console.error('Error fetching calendar events:', error instanceof Error ? error.message : 'Unknown error')
+    console.error(
+      'Error fetching calendar events:',
+      error instanceof Error ? error.message : 'Unknown error',
+    )
     console.log('Continuing without calendar data')
     return null
   }
@@ -157,14 +165,14 @@ function buildPrompt(
 
   // Get relevant pipeline data
   const activeOpportunities = pipeline.opportunities.filter(
-    opp => !opp.stage.startsWith('closed')
+    (opp) => !opp.stage.startsWith('closed'),
   )
   const highSignalOps = getHighSignalOpportunities(pipeline, 7)
   const overdueContacts = getOverdueFollowUps(network)
 
   // Count opportunities by stage
   const stageCount: Record<string, number> = {}
-  activeOpportunities.forEach(opp => {
+  activeOpportunities.forEach((opp) => {
     stageCount[opp.stage] = (stageCount[opp.stage] || 0) + 1
   })
 
@@ -211,15 +219,17 @@ If either streak is at 1, flag as AT RISK.
 Today's events that affect the plan. Flag conflicts or deep work windows.
 
 ## Weekly Review
-${isWeeklyReviewDay
-  ? `Today is ${dayOfWeek} — weekly review items are due:
+${
+  isWeeklyReviewDay
+    ? `Today is ${dayOfWeek} — weekly review items are due:
 - Review and update pipeline stages
 - Assess network tier transitions
 - If meaningful progress was made: write a technical blog post or detailed Twitter/X thread
 Content strategy: Show work, not thoughts. GitHub repos and technical blogs only (not LinkedIn).
 Thesis threads: Reliable agent architecture, Human-AI collaboration, Complex task automation, Career transparency.`
-  : `Not a review day. Only surface if there is something time-sensitive for weekly items (e.g., content opportunity tied to current work).
-Content frequency: Only when there is something real to share.`}
+    : `Not a review day. Only surface if there is something time-sensitive for weekly items (e.g., content opportunity tied to current work).
+Content frequency: Only when there is something real to share.`
+}
 
 Rules:
 - Be direct and specific — no fluff
@@ -230,7 +240,7 @@ Rules:
 
   // Contacts with upcoming or overdue next_touch, sorted by urgency
   const actionableContacts = network.contacts
-    .filter(c => c.next_touch)
+    .filter((c) => c.next_touch)
     .sort((a, b) => (a.next_touch || '').localeCompare(b.next_touch || ''))
 
   const user = `Today: ${dayOfWeek}, ${dateStr}
@@ -246,32 +256,60 @@ CONTEXT METRICS:
 PIPELINE SNAPSHOT:
 Active opportunities: ${activeOpportunities.length}
 By stage: ${JSON.stringify(stageCount, null, 2)}
-High signal (7+): ${highSignalOps.map(o => `${o.company} - ${o.role}`).join(', ') || 'None'}
+High signal (7+): ${highSignalOps.map((o) => `${o.company} - ${o.role}`).join(', ') || 'None'}
 
 TOP OPPORTUNITIES:
-${highSignalOps.slice(0, 5).map(opp =>
-  `- ${opp.company} (${opp.role}): Stage=${opp.stage}, Signal=${opp.signal_strength}, Last=${opp.last_action.date}${opp.next_action ? `, Next=${opp.next_action.date}: ${opp.next_action.task}` : ''}`
-).join('\n') || 'No high-signal opportunities'}
+${
+  highSignalOps
+    .slice(0, 5)
+    .map(
+      (opp) =>
+        `- ${opp.company} (${opp.role}): Stage=${opp.stage}, Signal=${opp.signal_strength}, Last=${opp.last_action.date}${opp.next_action ? `, Next=${opp.next_action.date}: ${opp.next_action.task}` : ''}`,
+    )
+    .join('\n') || 'No high-signal opportunities'
+}
 
 OVERDUE FOLLOW-UPS:
-${overdueContacts.length > 0
-  ? overdueContacts.map(c => `- ${c.name} (${c.company}, ${c.relationship}): Due ${c.next_touch}${c.context ? ` — ${c.context}` : ''}`).join('\n')
-  : 'None overdue'}
+${
+  overdueContacts.length > 0
+    ? overdueContacts
+        .map(
+          (c) =>
+            `- ${c.name} (${c.company}, ${c.relationship}): Due ${c.next_touch}${c.context ? ` — ${c.context}` : ''}`,
+        )
+        .join('\n')
+    : 'None overdue'
+}
 
 UPCOMING TOUCHES:
-${actionableContacts.filter(c => !overdueContacts.includes(c)).slice(0, 5).map(c =>
-  `- ${c.name} (${c.company}, ${c.relationship}): ${c.next_touch}${c.context ? ` — ${c.context}` : ''}`
-).join('\n') || 'None scheduled'}
+${
+  actionableContacts
+    .filter((c) => !overdueContacts.includes(c))
+    .slice(0, 5)
+    .map(
+      (c) =>
+        `- ${c.name} (${c.company}, ${c.relationship}): ${c.next_touch}${c.context ? ` — ${c.context}` : ''}`,
+    )
+    .join('\n') || 'None scheduled'
+}
 
 NETWORK CONTEXT:
 Total contacts: ${network.contacts.length}
-By tier: Target=${network.contacts.filter(c => c.relationship === 'target').length}, Warm=${network.contacts.filter(c => c.relationship === 'warm').length}, Active=${network.contacts.filter(c => c.relationship === 'active').length}, Advocate=${network.contacts.filter(c => c.relationship === 'advocate').length}
+By tier: Target=${network.contacts.filter((c) => c.relationship === 'target').length}, Warm=${network.contacts.filter((c) => c.relationship === 'warm').length}, Active=${network.contacts.filter((c) => c.relationship === 'active').length}, Advocate=${network.contacts.filter((c) => c.relationship === 'advocate').length}
 
-${linearIssues ? `LINEAR ISSUES:
-${linearIssues.map(i => `- [${i.priority}] ${i.title} (${i.state})${i.dueDate ? ` due ${i.dueDate}` : ''}`).join('\n')}` : 'LINEAR: Not available'}
+${
+  linearIssues
+    ? `LINEAR ISSUES:
+${linearIssues.map((i) => `- [${i.priority}] ${i.title} (${i.state})${i.dueDate ? ` due ${i.dueDate}` : ''}`).join('\n')}`
+    : 'LINEAR: Not available'
+}
 
-${calendarEvents ? `CALENDAR TODAY:
-${calendarEvents.map(e => `- ${e.startTime}-${e.endTime}: ${e.title}${e.description ? ` (${e.description})` : ''}`).join('\n')}` : 'CALENDAR: Not available'}
+${
+  calendarEvents
+    ? `CALENDAR TODAY:
+${calendarEvents.map((e) => `- ${e.startTime}-${e.endTime}: ${e.title}${e.description ? ` (${e.description})` : ''}`).join('\n')}`
+    : 'CALENDAR: Not available'
+}
 
 FULL PIPELINE DATA:
 ${JSON.stringify(activeOpportunities.slice(0, 5), null, 2)}
@@ -285,7 +323,7 @@ ${context.body}`
 // Call Claude API to generate briefing
 async function generateBriefing(
   prompt: { system: string; user: string },
-  config: BriefingConfig = DEFAULT_CONFIG
+  config: BriefingConfig = DEFAULT_CONFIG,
 ): Promise<BriefingOutput> {
   const apiKey = config.anthropicApiKey || process.env.ANTHROPIC_API_KEY?.trim()
 
@@ -301,14 +339,14 @@ async function generateBriefing(
     const response = await client.messages.create({
       model: config.modelName,
       max_tokens: config.maxTokens,
-    messages: [
-      {
-        role: 'user',
-        content: prompt.user,
-      },
-    ],
-    system: prompt.system,
-  })
+      messages: [
+        {
+          role: 'user',
+          content: prompt.user,
+        },
+      ],
+      system: prompt.system,
+    })
 
     // Validate response structure
     if (!response.content?.[0] || response.content[0].type !== 'text') {
@@ -318,15 +356,15 @@ async function generateBriefing(
     const text = response.content[0].text
 
     // Parse sections from the response with better error handling
-    const sections = text.split('## ').filter(s => s.trim())
+    const sections = text.split('## ').filter((s) => s.trim())
     const briefing: BriefingOutput = {
-    outreachTarget: '',
-    commitTarget: '',
-    pipelineSnapshot: '',
-    streakStatus: '',
-    calendarContext: '',
-    weeklyReview: '',
-  }
+      outreachTarget: '',
+      commitTarget: '',
+      pipelineSnapshot: '',
+      streakStatus: '',
+      calendarContext: '',
+      weeklyReview: '',
+    }
 
     // Map sections more robustly
     const sectionMap: Record<string, keyof BriefingOutput> = {
@@ -338,7 +376,7 @@ async function generateBriefing(
       'Weekly Review': 'weeklyReview',
     }
 
-    sections.forEach(section => {
+    sections.forEach((section) => {
       const [title, ...content] = section.split('\n')
       const contentText = content.join('\n').trim()
 
@@ -377,7 +415,7 @@ function displayBriefing(briefing: BriefingOutput): void {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   })
 
   console.log(`\n${separator}`)
@@ -453,7 +491,6 @@ async function main(): Promise<void> {
 
     // 5. Display briefing
     displayBriefing(briefing)
-
   } catch (error) {
     console.error('Error generating briefing:', error)
     process.exit(1)
@@ -465,4 +502,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main()
 }
 
-export { parseContext, buildPrompt, generateBriefing, displayBriefing, DEFAULT_CONFIG, type BriefingConfig }
+export {
+  parseContext,
+  buildPrompt,
+  generateBriefing,
+  displayBriefing,
+  DEFAULT_CONFIG,
+  type BriefingConfig,
+}

@@ -52,7 +52,9 @@ export function EventDetail({ eventId, onBack }: EventDetailProps) {
             <div className="flex items-center gap-4">
               <div>
                 <span className="text-xs font-medium uppercase text-gray-500">Confidence</span>
-                <p className="text-sm text-gray-900">{event.confidence ? (event.confidence * 100).toFixed(0) : 0}%</p>
+                <p className="text-sm text-gray-900">
+                  {event.confidence ? (event.confidence * 100).toFixed(0) : 0}%
+                </p>
               </div>
             </div>
             <div>

@@ -5,7 +5,7 @@ import {
   getContactsByRelationship,
   getHighSignalOpportunities,
   getOverdueFollowUps,
-  createId
+  createId,
 } from './index'
 
 describe('Career Ops Data Helpers', () => {
@@ -27,7 +27,7 @@ describe('Career Ops Data Helpers', () => {
           last_action: { date: '2026-02-01', summary: 'Had first interview' },
           next_action: { date: '2026-02-10', task: 'Technical interview' },
           notes: 'Great fit',
-          url: 'https://example.com'
+          url: 'https://example.com',
         },
         {
           id: 'company-b-staff',
@@ -41,7 +41,7 @@ describe('Career Ops Data Helpers', () => {
           last_action: { date: '2026-02-05', summary: 'Added to pipeline' },
           next_action: null,
           notes: 'Needs research',
-          url: ''
+          url: '',
         },
         {
           id: 'company-c-principal',
@@ -55,8 +55,8 @@ describe('Career Ops Data Helpers', () => {
           last_action: { date: '2026-02-03', summary: 'Sent intro email' },
           next_action: { date: '2026-02-08', task: 'Follow up' },
           notes: 'AI platform company',
-          url: ''
-        }
+          url: '',
+        },
       ],
       metadata: {
         last_updated: '2026-02-05',
@@ -69,9 +69,9 @@ describe('Career Ops Data Helpers', () => {
           interview: 1,
           offer: 0,
           'closed-won': 0,
-          'closed-lost': 0
-        }
-      }
+          'closed-lost': 0,
+        },
+      },
     }
 
     mockNetwork = {
@@ -87,7 +87,7 @@ describe('Career Ops Data Helpers', () => {
           tags: ['vp-eng', 'hiring-manager'],
           last_interaction: null,
           next_touch: '2026-02-01', // Overdue
-          context: 'Met at conference'
+          context: 'Met at conference',
         },
         {
           id: 'jane-smith',
@@ -101,10 +101,10 @@ describe('Career Ops Data Helpers', () => {
           last_interaction: {
             date: '2026-02-04',
             channel: 'Email',
-            summary: 'Offered to help'
+            summary: 'Offered to help',
           },
           next_touch: '2026-02-15', // Future
-          context: 'Former colleague'
+          context: 'Former colleague',
         },
         {
           id: 'bob-wilson',
@@ -117,8 +117,8 @@ describe('Career Ops Data Helpers', () => {
           tags: ['recruiter'],
           last_interaction: null,
           next_touch: null,
-          context: 'Specializes in AI roles'
-        }
+          context: 'Specializes in AI roles',
+        },
       ],
       metadata: {
         last_updated: '2026-02-05',
@@ -127,7 +127,7 @@ describe('Career Ops Data Helpers', () => {
           target: 1,
           warm: 1,
           active: 0,
-          advocate: 1
+          advocate: 1,
         },
         tags_distribution: {
           founder: 1,
@@ -136,9 +136,9 @@ describe('Career Ops Data Helpers', () => {
           'vp-eng': 1,
           peer: 0,
           recruiter: 1,
-          investor: 0
-        }
-      }
+          investor: 0,
+        },
+      },
     }
   })
 
@@ -204,7 +204,7 @@ describe('Career Ops Data Helpers', () => {
 
     it('should not include future or null next_touch dates', () => {
       const overdue = getOverdueFollowUps(mockNetwork)
-      const names = overdue.map(c => c.name)
+      const names = overdue.map((c) => c.name)
       expect(names).not.toContain('Jane Smith') // Future date
       expect(names).not.toContain('Bob Wilson') // null next_touch
     })
@@ -212,24 +212,19 @@ describe('Career Ops Data Helpers', () => {
 
   describe('createId', () => {
     it('should create slugified IDs from parts', () => {
-      expect(createId('Company Name', 'Staff Engineer'))
-        .toBe('company-name-staff-engineer')
+      expect(createId('Company Name', 'Staff Engineer')).toBe('company-name-staff-engineer')
 
-      expect(createId('AI/ML Company', 'Sr. Engineer'))
-        .toBe('ai-ml-company-sr-engineer')
+      expect(createId('AI/ML Company', 'Sr. Engineer')).toBe('ai-ml-company-sr-engineer')
 
-      expect(createId(' Extra  Spaces ', ' Between '))
-        .toBe('extra-spaces-between')
+      expect(createId(' Extra  Spaces ', ' Between ')).toBe('extra-spaces-between')
     })
 
     it('should handle special characters', () => {
-      expect(createId('Company (USA)', 'Engineer #1'))
-        .toBe('company-usa-engineer-1')
+      expect(createId('Company (USA)', 'Engineer #1')).toBe('company-usa-engineer-1')
     })
 
     it('should handle single part', () => {
-      expect(createId('SinglePart'))
-        .toBe('singlepart')
+      expect(createId('SinglePart')).toBe('singlepart')
     })
   })
 })
