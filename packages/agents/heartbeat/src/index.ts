@@ -1,10 +1,22 @@
 import express from 'express'
+import type { Response } from 'express'
 import { Client } from 'pg'
 import { createClient } from 'redis'
 import cron from 'node-cron'
 
 const app = express()
 const PORT = process.env.PORT || 3001
+
+// Validate required environment variables
+if (!process.env.DATABASE_URL) {
+  console.error('ERROR: DATABASE_URL environment variable is required')
+  process.exit(1)
+}
+
+if (!process.env.REDIS_URL) {
+  console.error('ERROR: REDIS_URL environment variable is required')
+  process.exit(1)
+}
 
 // Database connection
 const pgClient = new Client({
@@ -17,10 +29,13 @@ const redisClient = createClient({
 })
 
 // Store for SSE clients
-const sseClients = new Set<express.Response>()
+const sseClients = new Set<Response>()
 
 // Track PostgreSQL connection status
 let isPostgresConnected = false
+
+// Track if heartbeat is currently running
+let isHeartbeatRunning = false
 
 // Initialize connections
 async function init() {
@@ -34,7 +49,7 @@ async function init() {
     await pgClient.query(`
       CREATE TABLE IF NOT EXISTS heartbeats (
         id SERIAL PRIMARY KEY,
-        timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+        timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         agent_name VARCHAR(255) NOT NULL,
         status VARCHAR(50) DEFAULT 'alive',
         metadata JSONB
@@ -58,8 +73,15 @@ pgClient.on('end', () => {
   isPostgresConnected = false
 })
 
-// Heartbeat function
+// Heartbeat function with concurrency protection
 async function sendHeartbeat() {
+  // Prevent overlapping heartbeat executions
+  if (isHeartbeatRunning) {
+    console.log('Heartbeat already in progress, skipping...')
+    return
+  }
+
+  isHeartbeatRunning = true
   const timestamp = new Date().toISOString()
   const agentName = process.env.AGENT_NAME || 'heartbeat'
 
@@ -95,6 +117,8 @@ async function sendHeartbeat() {
     console.log(`Heartbeat sent at ${timestamp}`)
   } catch (error) {
     console.error('Failed to send heartbeat:', error)
+  } finally {
+    isHeartbeatRunning = false
   }
 }
 

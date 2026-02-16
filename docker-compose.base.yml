@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: grund
       POSTGRES_PASSWORD: grund_db_2024
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./packages/core/database/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -15,7 +15,7 @@ services:
       - grund-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U grund"]
+      test: ['CMD-SHELL', 'pg_isready -U grund']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,14 +24,14 @@ services:
     image: redis:7-alpine
     container_name: grund-redis
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     networks:
       - grund-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5

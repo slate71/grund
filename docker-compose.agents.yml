@@ -14,12 +14,12 @@ services:
       PORT: 3001
       AGENT_NAME: heartbeat
     ports:
-      - "3001:3001"
+      - '3001:3001'
     networks:
       - grund-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3001/health']
       interval: 30s
       timeout: 10s
       retries: 3
