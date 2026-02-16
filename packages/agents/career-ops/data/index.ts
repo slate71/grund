@@ -20,7 +20,7 @@ export type PipelineStage =
 export type OpportunitySource = 'inbound' | 'referral' | 'cold' | 'recruiter'
 
 export interface CompRange {
-  low: number  // in thousands
+  low: number // in thousands
   high: number // in thousands
 }
 
@@ -122,32 +122,27 @@ export function saveNetwork(data: NetworkData): void {
 // Query helpers
 export function getOpportunitiesByStage(
   pipeline: PipelineData,
-  stage: PipelineStage
+  stage: PipelineStage,
 ): Opportunity[] {
-  return pipeline.opportunities.filter(opp => opp.stage === stage)
+  return pipeline.opportunities.filter((opp) => opp.stage === stage)
 }
 
 export function getContactsByRelationship(
   network: NetworkData,
-  relationship: RelationshipTier
+  relationship: RelationshipTier,
 ): Contact[] {
-  return network.contacts.filter(contact => contact.relationship === relationship)
+  return network.contacts.filter((contact) => contact.relationship === relationship)
 }
 
-export function getHighSignalOpportunities(
-  pipeline: PipelineData,
-  threshold = 7
-): Opportunity[] {
+export function getHighSignalOpportunities(pipeline: PipelineData, threshold = 7): Opportunity[] {
   return pipeline.opportunities
-    .filter(opp => opp.signal_strength >= threshold)
+    .filter((opp) => opp.signal_strength >= threshold)
     .sort((a, b) => b.signal_strength - a.signal_strength)
 }
 
 export function getOverdueFollowUps(network: NetworkData): Contact[] {
   const now = new Date().toISOString()
-  return network.contacts.filter(
-    contact => contact.next_touch && contact.next_touch < now
-  )
+  return network.contacts.filter((contact) => contact.next_touch && contact.next_touch < now)
 }
 
 // Utility to create slugified IDs
