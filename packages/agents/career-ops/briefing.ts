@@ -8,13 +8,10 @@ import yaml from 'js-yaml'
 import {
   loadPipeline,
   loadNetwork,
-  getOpportunitiesByStage,
   getHighSignalOpportunities,
   getOverdueFollowUps,
   type PipelineData,
   type NetworkData,
-  type Contact,
-  type Opportunity,
 } from './data/index.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -50,11 +47,6 @@ interface CalendarEvent {
   startTime: string
   endTime: string
   description?: string
-}
-
-interface BriefingSection {
-  title: string
-  content: string
 }
 
 interface BriefingOutput {
@@ -110,9 +102,11 @@ function parseContext(config: BriefingConfig = DEFAULT_CONFIG): Context {
     }
 
     // Validate types
-    if (typeof frontmatter.runway_days !== 'number' ||
-        typeof frontmatter.monthly_burn !== 'number' ||
-        typeof frontmatter.pipeline_count !== 'number') {
+    if (
+      typeof frontmatter.runway_days !== 'number' ||
+      typeof frontmatter.monthly_burn !== 'number' ||
+      typeof frontmatter.pipeline_count !== 'number'
+    ) {
       console.warn('Warning: Some frontmatter fields have invalid types, using defaults')
     }
 
@@ -132,7 +126,10 @@ async function fetchLinearIssues(): Promise<LinearIssue[] | null> {
     console.log('Linear integration not available - continuing without Linear data')
     return null
   } catch (error) {
-    console.error('Error fetching Linear issues:', error instanceof Error ? error.message : 'Unknown error')
+    console.error(
+      'Error fetching Linear issues:',
+      error instanceof Error ? error.message : 'Unknown error',
+    )
     console.log('Continuing without Linear data')
     return null
   }
@@ -145,7 +142,10 @@ async function fetchCalendarEvents(): Promise<CalendarEvent[] | null> {
     console.log('Calendar integration not available - continuing without calendar data')
     return null
   } catch (error) {
-    console.error('Error fetching calendar events:', error instanceof Error ? error.message : 'Unknown error')
+    console.error(
+      'Error fetching calendar events:',
+      error instanceof Error ? error.message : 'Unknown error',
+    )
     console.log('Continuing without calendar data')
     return null
   }
@@ -165,14 +165,14 @@ function buildPrompt(
 
   // Get relevant pipeline data
   const activeOpportunities = pipeline.opportunities.filter(
-    opp => !opp.stage.startsWith('closed')
+    (opp) => !opp.stage.startsWith('closed'),
   )
   const highSignalOps = getHighSignalOpportunities(pipeline, 7)
   const overdueContacts = getOverdueFollowUps(network)
 
   // Count opportunities by stage
   const stageCount: Record<string, number> = {}
-  activeOpportunities.forEach(opp => {
+  activeOpportunities.forEach((opp) => {
     stageCount[opp.stage] = (stageCount[opp.stage] || 0) + 1
   })
 
@@ -223,29 +223,45 @@ CONTEXT METRICS:
 PIPELINE SNAPSHOT:
 Active opportunities: ${activeOpportunities.length}
 By stage: ${JSON.stringify(stageCount, null, 2)}
-High signal (7+): ${highSignalOps.map(o => `${o.company} - ${o.role}`).join(', ') || 'None'}
+High signal (7+): ${highSignalOps.map((o) => `${o.company} - ${o.role}`).join(', ') || 'None'}
 
 TOP OPPORTUNITIES:
-${highSignalOps.slice(0, 3).map(opp =>
-  `- ${opp.company} (${opp.role}): Stage=${opp.stage}, Signal=${opp.signal_strength}, Last=${opp.last_action.date}`
-).join('\n') || 'No high-signal opportunities'}
+${
+  highSignalOps
+    .slice(0, 3)
+    .map(
+      (opp) =>
+        `- ${opp.company} (${opp.role}): Stage=${opp.stage}, Signal=${opp.signal_strength}, Last=${opp.last_action.date}`,
+    )
+    .join('\n') || 'No high-signal opportunities'
+}
 
 OVERDUE FOLLOW-UPS:
-${overdueContacts.length > 0
-  ? overdueContacts.map(c => `- ${c.name} (${c.company}): Due ${c.next_touch}`).join('\n')
-  : 'None overdue'}
+${
+  overdueContacts.length > 0
+    ? overdueContacts.map((c) => `- ${c.name} (${c.company}): Due ${c.next_touch}`).join('\n')
+    : 'None overdue'
+}
 
 NETWORK CONTEXT:
 Total contacts: ${network.contacts.length}
-Warm contacts: ${network.contacts.filter(c => c.relationship === 'warm').length}
-Active conversations: ${network.contacts.filter(c => c.relationship === 'active').length}
-Advocates: ${network.contacts.filter(c => c.relationship === 'advocate').length}
+Warm contacts: ${network.contacts.filter((c) => c.relationship === 'warm').length}
+Active conversations: ${network.contacts.filter((c) => c.relationship === 'active').length}
+Advocates: ${network.contacts.filter((c) => c.relationship === 'advocate').length}
 
-${linearIssues ? `LINEAR ISSUES:
-${linearIssues.map(i => `- [${i.priority}] ${i.title} (${i.state})`).join('\n')}` : 'LINEAR: Not available'}
+${
+  linearIssues
+    ? `LINEAR ISSUES:
+${linearIssues.map((i) => `- [${i.priority}] ${i.title} (${i.state})`).join('\n')}`
+    : 'LINEAR: Not available'
+}
 
-${calendarEvents ? `CALENDAR TODAY:
-${calendarEvents.map(e => `- ${e.startTime}: ${e.title}`).join('\n')}` : 'CALENDAR: Not available'}
+${
+  calendarEvents
+    ? `CALENDAR TODAY:
+${calendarEvents.map((e) => `- ${e.startTime}: ${e.title}`).join('\n')}`
+    : 'CALENDAR: Not available'
+}
 
 FULL PIPELINE DATA:
 ${JSON.stringify(activeOpportunities.slice(0, 5), null, 2)}
@@ -259,7 +275,7 @@ ${context.body.split('\n').slice(12, 30).join('\n')}`
 // Call Claude API to generate briefing
 async function generateBriefing(
   prompt: { system: string; user: string },
-  config: BriefingConfig = DEFAULT_CONFIG
+  config: BriefingConfig = DEFAULT_CONFIG,
 ): Promise<BriefingOutput> {
   const apiKey = config.anthropicApiKey || process.env.ANTHROPIC_API_KEY?.trim()
 
@@ -275,14 +291,14 @@ async function generateBriefing(
     const response = await client.messages.create({
       model: config.modelName,
       max_tokens: config.maxTokens,
-    messages: [
-      {
-        role: 'user',
-        content: prompt.user,
-      },
-    ],
-    system: prompt.system,
-  })
+      messages: [
+        {
+          role: 'user',
+          content: prompt.user,
+        },
+      ],
+      system: prompt.system,
+    })
 
     // Validate response structure
     if (!response.content?.[0] || response.content[0].type !== 'text') {
@@ -292,15 +308,15 @@ async function generateBriefing(
     const text = response.content[0].text
 
     // Parse sections from the response with better error handling
-    const sections = text.split('## ').filter(s => s.trim())
+    const sections = text.split('## ').filter((s) => s.trim())
     const briefing: BriefingOutput = {
-    dmTarget: '',
-    postAngle: '',
-    commitTarget: '',
-    pipelineSnapshot: '',
-    streakStatus: '',
-    calendarContext: '',
-  }
+      dmTarget: '',
+      postAngle: '',
+      commitTarget: '',
+      pipelineSnapshot: '',
+      streakStatus: '',
+      calendarContext: '',
+    }
 
     // Map sections more robustly
     const sectionMap: Record<string, keyof BriefingOutput> = {
@@ -312,7 +328,7 @@ async function generateBriefing(
       'Calendar Context': 'calendarContext',
     }
 
-    sections.forEach(section => {
+    sections.forEach((section) => {
       const [title, ...content] = section.split('\n')
       const contentText = content.join('\n').trim()
 
@@ -351,7 +367,7 @@ function displayBriefing(briefing: BriefingOutput): void {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   })
 
   console.log(`\n${separator}`)
@@ -427,7 +443,6 @@ async function main(): Promise<void> {
 
     // 5. Display briefing
     displayBriefing(briefing)
-
   } catch (error) {
     console.error('Error generating briefing:', error)
     process.exit(1)
@@ -439,4 +454,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main()
 }
 
-export { parseContext, buildPrompt, generateBriefing, displayBriefing, DEFAULT_CONFIG, type BriefingConfig }
+export {
+  parseContext,
+  buildPrompt,
+  generateBriefing,
+  displayBriefing,
+  DEFAULT_CONFIG,
+  type BriefingConfig,
+}
