@@ -1,0 +1,35 @@
+services:
+  heartbeat-agent:
+    build: ./packages/agents/heartbeat
+    container_name: grund-heartbeat
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://grund:grund_db_2024@postgres:5432/grund
+      REDIS_URL: redis://redis:6379
+      PORT: 3001
+      AGENT_NAME: heartbeat
+    ports:
+      - "3001:3001"
+    networks:
+      - grund-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Future agents will go here
+  # briefing-agent:
+  #   build: ./packages/agents/career-ops
+  #   container_name: grund-briefing
+  #   ...
+
+networks:
+  grund-network:
+    external: false
