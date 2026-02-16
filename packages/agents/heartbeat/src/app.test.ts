@@ -1,0 +1,307 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import request from 'supertest'
+import type { Response } from 'express'
+import { validateEnvironment, createApp, createHeartbeatFunction, initializeConnections } from './app'
+
+describe('Heartbeat Agent App', () => {
+  let mockPgClient: any
+  let mockRedisClient: any
+  let sseClients: Set<Response>
+  let isPostgresConnected: boolean
+  let isHeartbeatRunning: { value: boolean }
+
+  beforeEach(() => {
+    // Reset mocks
+    mockPgClient = {
+      connect: vi.fn().mockResolvedValue(undefined),
+      query: vi.fn().mockResolvedValue({ rows: [] }),
+      on: vi.fn(),
+      end: vi.fn()
+    }
+
+    mockRedisClient = {
+      connect: vi.fn().mockResolvedValue(undefined),
+      publish: vi.fn().mockResolvedValue(undefined),
+      isReady: true,
+      on: vi.fn()
+    }
+
+    sseClients = new Set<Response>()
+    isPostgresConnected = true
+    isHeartbeatRunning = { value: false }
+
+    // Set required environment variables
+    process.env.DATABASE_URL = 'postgres://test:test@localhost:5432/test'
+    process.env.REDIS_URL = 'redis://localhost:6379'
+    process.env.AGENT_NAME = 'test-heartbeat'
+  })
+
+  describe('validateEnvironment', () => {
+    it('should pass when all required env vars are set', () => {
+      expect(() => validateEnvironment()).not.toThrow()
+    })
+
+    it('should exit when DATABASE_URL is missing', () => {
+      delete process.env.DATABASE_URL
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('Process exit')
+      })
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect(() => validateEnvironment()).toThrow('Process exit')
+      expect(consoleSpy).toHaveBeenCalledWith('ERROR: DATABASE_URL environment variable is required')
+
+      exitSpy.mockRestore()
+      consoleSpy.mockRestore()
+    })
+
+    it('should exit when REDIS_URL is missing', () => {
+      delete process.env.REDIS_URL
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('Process exit')
+      })
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      expect(() => validateEnvironment()).toThrow('Process exit')
+      expect(consoleSpy).toHaveBeenCalledWith('ERROR: REDIS_URL environment variable is required')
+
+      exitSpy.mockRestore()
+      consoleSpy.mockRestore()
+    })
+  })
+
+  describe('createApp', () => {
+    it('should create an express app with all endpoints', () => {
+      const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+      expect(app).toBeDefined()
+      expect(app.get).toBeDefined()
+      expect(app.listen).toBeDefined()
+    })
+
+    describe('Health Endpoint', () => {
+      it('should return healthy status', async () => {
+        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+
+        const response = await request(app)
+          .get('/health')
+          .expect('Content-Type', /json/)
+          .expect(200)
+
+        expect(response.body).toEqual({
+          status: 'healthy',
+          uptime: expect.any(Number),
+          connections: {
+            postgres: true,
+            redis: true,
+            sseClients: 0
+          }
+        })
+      })
+
+      it('should reflect postgres connection status', async () => {
+        isPostgresConnected = false
+        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+
+        const response = await request(app).get('/health').expect(200)
+        expect(response.body.connections.postgres).toBe(false)
+      })
+
+      it('should reflect redis connection status', async () => {
+        mockRedisClient.isReady = false
+        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+
+        const response = await request(app).get('/health').expect(200)
+        expect(response.body.connections.redis).toBe(false)
+      })
+
+      it('should count SSE clients', async () => {
+        const mockClient = {} as Response
+        sseClients.add(mockClient)
+
+        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const response = await request(app).get('/health').expect(200)
+
+        expect(response.body.connections.sseClients).toBe(1)
+      })
+    })
+
+    describe('SSE Stream Endpoint', () => {
+      it('should set correct headers for SSE', (done) => {
+        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+
+        request(app)
+          .get('/heartbeat/stream')
+          .expect(200)
+          .expect('Content-Type', 'text/event-stream')
+          .expect('Cache-Control', 'no-cache')
+          .expect('Connection', 'keep-alive')
+          .expect('Access-Control-Allow-Origin', '*')
+          .end((err, res) => {
+            if (err) return done(err)
+            expect(res.text).toContain('data: {"connected": true}')
+            // SSE connections stay open, so we need to abort
+            res.req.abort()
+            done()
+          })
+      })
+    })
+
+    describe('Recent Heartbeats Endpoint', () => {
+      it('should return heartbeats from database', async () => {
+        const mockHeartbeats = [
+          {
+            id: 1,
+            timestamp: '2024-01-01T00:00:00Z',
+            agent_name: 'test-heartbeat',
+            status: 'alive',
+            metadata: { uptime: 100 }
+          }
+        ]
+        mockPgClient.query.mockResolvedValueOnce({ rows: mockHeartbeats })
+
+        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const response = await request(app)
+          .get('/heartbeat/recent')
+          .expect('Content-Type', /json/)
+          .expect(200)
+
+        expect(response.body).toEqual(mockHeartbeats)
+        expect(mockPgClient.query).toHaveBeenCalledWith(
+          'SELECT * FROM heartbeats ORDER BY timestamp DESC LIMIT 10'
+        )
+      })
+
+      it('should handle database errors', async () => {
+        mockPgClient.query.mockRejectedValueOnce(new Error('Database error'))
+
+        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const response = await request(app)
+          .get('/heartbeat/recent')
+          .expect('Content-Type', /json/)
+          .expect(500)
+
+        expect(response.body).toEqual({ error: 'Failed to fetch heartbeats' })
+      })
+    })
+  })
+
+  describe('createHeartbeatFunction', () => {
+    it('should send heartbeat successfully', async () => {
+      const mockResult = {
+        rows: [{ id: 1 }]
+      }
+      mockPgClient.query.mockResolvedValueOnce(mockResult)
+
+      const sendHeartbeat = createHeartbeatFunction(
+        mockPgClient,
+        mockRedisClient,
+        sseClients,
+        isHeartbeatRunning
+      )
+
+      await sendHeartbeat()
+
+      expect(mockPgClient.query).toHaveBeenCalledWith(
+        'INSERT INTO heartbeats (timestamp, agent_name, status, metadata) VALUES ($1, $2, $3, $4) RETURNING *',
+        expect.arrayContaining([
+          expect.any(String),
+          'test-heartbeat',
+          'alive',
+          expect.objectContaining({
+            uptime: expect.any(Number),
+            memory: expect.any(Object)
+          })
+        ])
+      )
+
+      expect(mockRedisClient.publish).toHaveBeenCalledWith(
+        'heartbeat',
+        expect.stringContaining('"agent":"test-heartbeat"')
+      )
+
+      expect(isHeartbeatRunning.value).toBe(false)
+    })
+
+    it('should prevent concurrent executions', async () => {
+      isHeartbeatRunning.value = true
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+      const sendHeartbeat = createHeartbeatFunction(
+        mockPgClient,
+        mockRedisClient,
+        sseClients,
+        isHeartbeatRunning
+      )
+
+      await sendHeartbeat()
+
+      expect(consoleSpy).toHaveBeenCalledWith('Heartbeat already in progress, skipping...')
+      expect(mockPgClient.query).not.toHaveBeenCalled()
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should handle errors gracefully', async () => {
+      mockPgClient.query.mockRejectedValueOnce(new Error('Database error'))
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const sendHeartbeat = createHeartbeatFunction(
+        mockPgClient,
+        mockRedisClient,
+        sseClients,
+        isHeartbeatRunning
+      )
+
+      await sendHeartbeat()
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to send heartbeat:', expect.any(Error))
+      expect(isHeartbeatRunning.value).toBe(false) // Should reset flag even on error
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should broadcast to SSE clients', async () => {
+      const mockClient = {
+        write: vi.fn()
+      } as unknown as Response
+      sseClients.add(mockClient)
+
+      mockPgClient.query.mockResolvedValueOnce({
+        rows: [{ id: 1 }]
+      })
+
+      const sendHeartbeat = createHeartbeatFunction(
+        mockPgClient,
+        mockRedisClient,
+        sseClients,
+        isHeartbeatRunning
+      )
+
+      await sendHeartbeat()
+
+      expect(mockClient.write).toHaveBeenCalledWith(
+        expect.stringContaining('data: {')
+      )
+    })
+  })
+
+  describe('initializeConnections', () => {
+    it('should connect to databases and create table', async () => {
+      await initializeConnections(mockPgClient, mockRedisClient)
+
+      expect(mockPgClient.connect).toHaveBeenCalled()
+      expect(mockRedisClient.connect).toHaveBeenCalled()
+      expect(mockPgClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('CREATE TABLE IF NOT EXISTS heartbeats')
+      )
+    })
+
+    it('should create table with correct schema', async () => {
+      await initializeConnections(mockPgClient, mockRedisClient)
+
+      expect(mockPgClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('timestamp TIMESTAMPTZ')
+      )
+    })
+  })
+})
