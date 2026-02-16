@@ -1,7 +1,6 @@
 import express from 'express'
 import type { Response } from 'express'
 import { Client } from 'pg'
-import { createClient } from 'redis'
 
 // Validate required environment variables
 export function validateEnvironment() {
@@ -17,7 +16,12 @@ export function validateEnvironment() {
 }
 
 // Create Express app
-export function createApp(pgClient: Client, redisClient: any, sseClients: Set<Response>, isPostgresConnected: () => boolean) {
+export function createApp(
+  pgClient: Client,
+  redisClient: any,
+  sseClients: Set<Response>,
+  isPostgresConnected: () => boolean,
+) {
   const app = express()
 
   // SSE endpoint
@@ -55,7 +59,9 @@ export function createApp(pgClient: Client, redisClient: any, sseClients: Set<Re
   // Get recent heartbeats
   app.get('/heartbeat/recent', async (req, res) => {
     try {
-      const result = await pgClient.query('SELECT * FROM heartbeats ORDER BY timestamp DESC LIMIT 10')
+      const result = await pgClient.query(
+        'SELECT * FROM heartbeats ORDER BY timestamp DESC LIMIT 10',
+      )
       res.json(result.rows)
     } catch {
       res.status(500).json({ error: 'Failed to fetch heartbeats' })
@@ -70,7 +76,7 @@ export function createHeartbeatFunction(
   pgClient: Client,
   redisClient: any,
   sseClients: Set<Response>,
-  isHeartbeatRunning: { value: boolean }
+  isHeartbeatRunning: { value: boolean },
 ) {
   return async function sendHeartbeat() {
     // Prevent overlapping heartbeat executions
@@ -87,7 +93,12 @@ export function createHeartbeatFunction(
       // Log to database
       const result = await pgClient.query(
         'INSERT INTO heartbeats (timestamp, agent_name, status, metadata) VALUES ($1, $2, $3, $4) RETURNING *',
-        [timestamp, agentName, 'alive', { uptime: process.uptime(), memory: process.memoryUsage() }],
+        [
+          timestamp,
+          agentName,
+          'alive',
+          { uptime: process.uptime(), memory: process.memoryUsage() },
+        ],
       )
 
       // Publish to Redis for other services
@@ -137,4 +148,33 @@ export async function initializeConnections(pgClient: Client, redisClient: any) 
       metadata JSONB
     )
   `)
+
+  // Create index on timestamp for efficient cleanup queries
+  await pgClient.query(`
+    CREATE INDEX IF NOT EXISTS idx_heartbeats_timestamp
+    ON heartbeats(timestamp)
+  `)
+}
+
+// Cleanup old heartbeat records
+export async function cleanupOldHeartbeats(
+  pgClient: Client,
+  retentionDays: number = 30,
+): Promise<number> {
+  try {
+    const result = await pgClient.query(
+      `DELETE FROM heartbeats
+       WHERE timestamp < NOW() - INTERVAL '${retentionDays} days'
+       RETURNING id`,
+    )
+
+    const deletedCount = result.rowCount || 0
+    if (deletedCount > 0) {
+      console.log(`Cleaned up ${deletedCount} heartbeat records older than ${retentionDays} days`)
+    }
+    return deletedCount
+  } catch (error) {
+    console.error('Failed to cleanup old heartbeats:', error)
+    return 0
+  }
 }

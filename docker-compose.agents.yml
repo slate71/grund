@@ -13,6 +13,7 @@ services:
       REDIS_URL: redis://redis:6379
       PORT: 3001
       AGENT_NAME: heartbeat
+      HEARTBEAT_RETENTION_DAYS: 30 # Keep last 30 days of heartbeats
     ports:
       - '3001:3001'
     networks:

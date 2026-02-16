@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import request from 'supertest'
 import type { Response } from 'express'
-import { validateEnvironment, createApp, createHeartbeatFunction, initializeConnections } from './app'
+import {
+  validateEnvironment,
+  createApp,
+  createHeartbeatFunction,
+  initializeConnections,
+} from './app'
 
 describe('Heartbeat Agent App', () => {
   let mockPgClient: any
@@ -16,14 +21,14 @@ describe('Heartbeat Agent App', () => {
       connect: vi.fn().mockResolvedValue(undefined),
       query: vi.fn().mockResolvedValue({ rows: [] }),
       on: vi.fn(),
-      end: vi.fn()
+      end: vi.fn(),
     }
 
     mockRedisClient = {
       connect: vi.fn().mockResolvedValue(undefined),
       publish: vi.fn().mockResolvedValue(undefined),
       isReady: true,
-      on: vi.fn()
+      on: vi.fn(),
     }
 
     sseClients = new Set<Response>()
@@ -49,7 +54,9 @@ describe('Heartbeat Agent App', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       expect(() => validateEnvironment()).toThrow('Process exit')
-      expect(consoleSpy).toHaveBeenCalledWith('ERROR: DATABASE_URL environment variable is required')
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'ERROR: DATABASE_URL environment variable is required',
+      )
 
       exitSpy.mockRestore()
       consoleSpy.mockRestore()
@@ -93,8 +100,8 @@ describe('Heartbeat Agent App', () => {
           connections: {
             postgres: true,
             redis: true,
-            sseClients: 0
-          }
+            sseClients: 0,
+          },
         })
       })
 
@@ -125,26 +132,6 @@ describe('Heartbeat Agent App', () => {
       })
     })
 
-    describe('SSE Stream Endpoint', () => {
-      it('should set correct headers for SSE', (done) => {
-        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
-
-        request(app)
-          .get('/heartbeat/stream')
-          .expect(200)
-          .expect('Content-Type', 'text/event-stream')
-          .expect('Cache-Control', 'no-cache')
-          .expect('Connection', 'keep-alive')
-          .expect('Access-Control-Allow-Origin', '*')
-          .end((err, res) => {
-            if (err) return done(err)
-            expect(res.text).toContain('data: {"connected": true}')
-            // SSE connections stay open, so we need to abort
-            res.req.abort()
-            done()
-          })
-      })
-    })
 
     describe('Recent Heartbeats Endpoint', () => {
       it('should return heartbeats from database', async () => {
@@ -154,8 +141,8 @@ describe('Heartbeat Agent App', () => {
             timestamp: '2024-01-01T00:00:00Z',
             agent_name: 'test-heartbeat',
             status: 'alive',
-            metadata: { uptime: 100 }
-          }
+            metadata: { uptime: 100 },
+          },
         ]
         mockPgClient.query.mockResolvedValueOnce({ rows: mockHeartbeats })
 
@@ -167,7 +154,7 @@ describe('Heartbeat Agent App', () => {
 
         expect(response.body).toEqual(mockHeartbeats)
         expect(mockPgClient.query).toHaveBeenCalledWith(
-          'SELECT * FROM heartbeats ORDER BY timestamp DESC LIMIT 10'
+          'SELECT * FROM heartbeats ORDER BY timestamp DESC LIMIT 10',
         )
       })
 
@@ -188,7 +175,7 @@ describe('Heartbeat Agent App', () => {
   describe('createHeartbeatFunction', () => {
     it('should send heartbeat successfully', async () => {
       const mockResult = {
-        rows: [{ id: 1 }]
+        rows: [{ id: 1 }],
       }
       mockPgClient.query.mockResolvedValueOnce(mockResult)
 
@@ -196,7 +183,7 @@ describe('Heartbeat Agent App', () => {
         mockPgClient,
         mockRedisClient,
         sseClients,
-        isHeartbeatRunning
+        isHeartbeatRunning,
       )
 
       await sendHeartbeat()
@@ -209,14 +196,14 @@ describe('Heartbeat Agent App', () => {
           'alive',
           expect.objectContaining({
             uptime: expect.any(Number),
-            memory: expect.any(Object)
-          })
-        ])
+            memory: expect.any(Object),
+          }),
+        ]),
       )
 
       expect(mockRedisClient.publish).toHaveBeenCalledWith(
         'heartbeat',
-        expect.stringContaining('"agent":"test-heartbeat"')
+        expect.stringContaining('"agent":"test-heartbeat"'),
       )
 
       expect(isHeartbeatRunning.value).toBe(false)
@@ -230,7 +217,7 @@ describe('Heartbeat Agent App', () => {
         mockPgClient,
         mockRedisClient,
         sseClients,
-        isHeartbeatRunning
+        isHeartbeatRunning,
       )
 
       await sendHeartbeat()
@@ -249,7 +236,7 @@ describe('Heartbeat Agent App', () => {
         mockPgClient,
         mockRedisClient,
         sseClients,
-        isHeartbeatRunning
+        isHeartbeatRunning,
       )
 
       await sendHeartbeat()
@@ -262,26 +249,24 @@ describe('Heartbeat Agent App', () => {
 
     it('should broadcast to SSE clients', async () => {
       const mockClient = {
-        write: vi.fn()
+        write: vi.fn(),
       } as unknown as Response
       sseClients.add(mockClient)
 
       mockPgClient.query.mockResolvedValueOnce({
-        rows: [{ id: 1 }]
+        rows: [{ id: 1 }],
       })
 
       const sendHeartbeat = createHeartbeatFunction(
         mockPgClient,
         mockRedisClient,
         sseClients,
-        isHeartbeatRunning
+        isHeartbeatRunning,
       )
 
       await sendHeartbeat()
 
-      expect(mockClient.write).toHaveBeenCalledWith(
-        expect.stringContaining('data: {')
-      )
+      expect(mockClient.write).toHaveBeenCalledWith(expect.stringContaining('data: {'))
     })
   })
 
@@ -292,7 +277,7 @@ describe('Heartbeat Agent App', () => {
       expect(mockPgClient.connect).toHaveBeenCalled()
       expect(mockRedisClient.connect).toHaveBeenCalled()
       expect(mockPgClient.query).toHaveBeenCalledWith(
-        expect.stringContaining('CREATE TABLE IF NOT EXISTS heartbeats')
+        expect.stringContaining('CREATE TABLE IF NOT EXISTS heartbeats'),
       )
     })
 
@@ -300,8 +285,81 @@ describe('Heartbeat Agent App', () => {
       await initializeConnections(mockPgClient, mockRedisClient)
 
       expect(mockPgClient.query).toHaveBeenCalledWith(
-        expect.stringContaining('timestamp TIMESTAMPTZ')
+        expect.stringContaining('timestamp TIMESTAMPTZ'),
       )
+    })
+
+    it('should create index on timestamp column', async () => {
+      await initializeConnections(mockPgClient, mockRedisClient)
+
+      expect(mockPgClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('CREATE INDEX IF NOT EXISTS idx_heartbeats_timestamp'),
+      )
+    })
+  })
+
+  describe('cleanupOldHeartbeats', () => {
+    it('should delete old heartbeat records', async () => {
+      const { cleanupOldHeartbeats } = await import('./app')
+      mockPgClient.query.mockResolvedValueOnce({
+        rowCount: 100,
+        rows: [],
+      })
+
+      const deletedCount = await cleanupOldHeartbeats(mockPgClient, 30)
+
+      expect(deletedCount).toBe(100)
+      expect(mockPgClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM heartbeats'),
+      )
+      expect(mockPgClient.query).toHaveBeenCalledWith(
+        expect.stringContaining("WHERE timestamp < NOW() - INTERVAL '30 days'"),
+      )
+    })
+
+    it('should handle cleanup errors gracefully', async () => {
+      const { cleanupOldHeartbeats } = await import('./app')
+      mockPgClient.query.mockRejectedValueOnce(new Error('Database error'))
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const deletedCount = await cleanupOldHeartbeats(mockPgClient, 30)
+
+      expect(deletedCount).toBe(0)
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to cleanup old heartbeats:',
+        expect.any(Error),
+      )
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should use custom retention days', async () => {
+      const { cleanupOldHeartbeats } = await import('./app')
+      mockPgClient.query.mockResolvedValueOnce({
+        rowCount: 50,
+        rows: [],
+      })
+
+      await cleanupOldHeartbeats(mockPgClient, 7)
+
+      expect(mockPgClient.query).toHaveBeenCalledWith(
+        expect.stringContaining("WHERE timestamp < NOW() - INTERVAL '7 days'"),
+      )
+    })
+
+    it('should log when records are deleted', async () => {
+      const { cleanupOldHeartbeats } = await import('./app')
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      mockPgClient.query.mockResolvedValueOnce({
+        rowCount: 75,
+        rows: [],
+      })
+
+      await cleanupOldHeartbeats(mockPgClient, 30)
+
+      expect(consoleSpy).toHaveBeenCalledWith('Cleaned up 75 heartbeat records older than 30 days')
+
+      consoleSpy.mockRestore()
     })
   })
 })

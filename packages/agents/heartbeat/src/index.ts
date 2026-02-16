@@ -2,7 +2,13 @@ import type { Response } from 'express'
 import { Client } from 'pg'
 import { createClient } from 'redis'
 import cron from 'node-cron'
-import { validateEnvironment, createApp, createHeartbeatFunction, initializeConnections } from './app'
+import {
+  validateEnvironment,
+  createApp,
+  createHeartbeatFunction,
+  initializeConnections,
+  cleanupOldHeartbeats,
+} from './app'
 
 const PORT = process.env.PORT || 3001
 
@@ -66,12 +72,26 @@ async function start() {
     sendHeartbeat()
   })
 
+  // Schedule cleanup job daily at 2 AM
+  cron.schedule('0 2 * * *', async () => {
+    console.log('Running daily heartbeat cleanup...')
+    const retentionDays = parseInt(process.env.HEARTBEAT_RETENTION_DAYS || '30')
+    const deletedCount = await cleanupOldHeartbeats(pgClient, retentionDays)
+    console.log(`Daily cleanup completed. Removed ${deletedCount} old records.`)
+  })
+
   // Send initial heartbeat on startup
   await sendHeartbeat()
+
+  // Run initial cleanup on startup (in case we haven't run in a while)
+  console.log('Running initial heartbeat cleanup...')
+  const retentionDays = parseInt(process.env.HEARTBEAT_RETENTION_DAYS || '30')
+  await cleanupOldHeartbeats(pgClient, retentionDays)
 
   app.listen(PORT, () => {
     console.log(`Heartbeat agent running on port ${PORT}`)
     console.log(`SSE stream available at http://localhost:${PORT}/heartbeat/stream`)
+    console.log(`Retention policy: keeping last ${retentionDays} days of heartbeats`)
   })
 }
 
