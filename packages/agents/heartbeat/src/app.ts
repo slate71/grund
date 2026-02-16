@@ -1,5 +1,6 @@
-import express from 'express'
-import type { Response } from 'express'
+import Fastify from 'fastify'
+import type { FastifyInstance } from 'fastify'
+import type { ServerResponse } from 'node:http'
 import { Client } from 'pg'
 
 // Validate required environment variables
@@ -15,37 +16,40 @@ export function validateEnvironment() {
   }
 }
 
-// Create Express app
+// Create Fastify app
 export function createApp(
   pgClient: Client,
   redisClient: any,
-  sseClients: Set<Response>,
+  sseClients: Set<ServerResponse>,
   isPostgresConnected: () => boolean,
-) {
-  const app = express()
+): FastifyInstance {
+  const app = Fastify()
 
   // SSE endpoint
-  app.get('/heartbeat/stream', (req, res) => {
-    res.setHeader('Content-Type', 'text/event-stream')
-    res.setHeader('Cache-Control', 'no-cache')
-    res.setHeader('Connection', 'keep-alive')
-    res.setHeader('Access-Control-Allow-Origin', '*')
+  app.get('/heartbeat/stream', (request, reply) => {
+    reply.raw.setHeader('Content-Type', 'text/event-stream')
+    reply.raw.setHeader('Cache-Control', 'no-cache')
+    reply.raw.setHeader('Connection', 'keep-alive')
+    reply.raw.setHeader('Access-Control-Allow-Origin', '*')
 
     // Send initial connection message
-    res.write('data: {"connected": true}\n\n')
+    reply.raw.write('data: {"connected": true}\n\n')
 
     // Add client to set
-    sseClients.add(res)
+    sseClients.add(reply.raw)
 
     // Remove client on disconnect
-    req.on('close', () => {
-      sseClients.delete(res)
+    request.raw.on('close', () => {
+      sseClients.delete(reply.raw)
     })
+
+    // Prevent Fastify from ending the response
+    reply.hijack()
   })
 
   // Health check endpoint
-  app.get('/health', (req, res) => {
-    res.json({
+  app.get('/health', async () => {
+    return {
       status: 'healthy',
       uptime: process.uptime(),
       connections: {
@@ -53,18 +57,19 @@ export function createApp(
         redis: redisClient.isReady,
         sseClients: sseClients.size,
       },
-    })
+    }
   })
 
   // Get recent heartbeats
-  app.get('/heartbeat/recent', async (req, res) => {
+  app.get('/heartbeat/recent', async (_request, reply) => {
     try {
       const result = await pgClient.query(
         'SELECT * FROM heartbeats ORDER BY timestamp DESC LIMIT 10',
       )
-      res.json(result.rows)
+      return result.rows
     } catch {
-      res.status(500).json({ error: 'Failed to fetch heartbeats' })
+      reply.code(500)
+      return { error: 'Failed to fetch heartbeats' }
     }
   })
 
@@ -75,7 +80,7 @@ export function createApp(
 export function createHeartbeatFunction(
   pgClient: Client,
   redisClient: any,
-  sseClients: Set<Response>,
+  sseClients: Set<ServerResponse>,
   isHeartbeatRunning: { value: boolean },
 ) {
   return async function sendHeartbeat() {

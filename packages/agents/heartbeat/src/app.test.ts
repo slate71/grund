@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import request from 'supertest'
-import type { Response } from 'express'
+import type { ServerResponse } from 'node:http'
 import {
   validateEnvironment,
   createApp,
@@ -11,7 +10,7 @@ import {
 describe('Heartbeat Agent App', () => {
   let mockPgClient: any
   let mockRedisClient: any
-  let sseClients: Set<Response>
+  let sseClients: Set<ServerResponse>
   let isPostgresConnected: boolean
   let isHeartbeatRunning: { value: boolean }
 
@@ -31,7 +30,7 @@ describe('Heartbeat Agent App', () => {
       on: vi.fn(),
     }
 
-    sseClients = new Set<Response>()
+    sseClients = new Set<ServerResponse>()
     isPostgresConnected = true
     isHeartbeatRunning = { value: false }
 
@@ -78,7 +77,7 @@ describe('Heartbeat Agent App', () => {
   })
 
   describe('createApp', () => {
-    it('should create an express app with all endpoints', () => {
+    it('should create a fastify app with all endpoints', () => {
       const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
       expect(app).toBeDefined()
       expect(app.get).toBeDefined()
@@ -89,12 +88,14 @@ describe('Heartbeat Agent App', () => {
       it('should return healthy status', async () => {
         const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
 
-        const response = await request(app)
-          .get('/health')
-          .expect('Content-Type', /json/)
-          .expect(200)
+        const response = await app.inject({
+          method: 'GET',
+          url: '/health',
+        })
 
-        expect(response.body).toEqual({
+        expect(response.statusCode).toBe(200)
+        expect(response.headers['content-type']).toMatch(/json/)
+        expect(response.json()).toEqual({
           status: 'healthy',
           uptime: expect.any(Number),
           connections: {
@@ -109,26 +110,38 @@ describe('Heartbeat Agent App', () => {
         isPostgresConnected = false
         const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
 
-        const response = await request(app).get('/health').expect(200)
-        expect(response.body.connections.postgres).toBe(false)
+        const response = await app.inject({
+          method: 'GET',
+          url: '/health',
+        })
+        expect(response.statusCode).toBe(200)
+        expect(response.json().connections.postgres).toBe(false)
       })
 
       it('should reflect redis connection status', async () => {
         mockRedisClient.isReady = false
         const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
 
-        const response = await request(app).get('/health').expect(200)
-        expect(response.body.connections.redis).toBe(false)
+        const response = await app.inject({
+          method: 'GET',
+          url: '/health',
+        })
+        expect(response.statusCode).toBe(200)
+        expect(response.json().connections.redis).toBe(false)
       })
 
       it('should count SSE clients', async () => {
-        const mockClient = {} as Response
+        const mockClient = {} as ServerResponse
         sseClients.add(mockClient)
 
         const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
-        const response = await request(app).get('/health').expect(200)
 
-        expect(response.body.connections.sseClients).toBe(1)
+        const response = await app.inject({
+          method: 'GET',
+          url: '/health',
+        })
+        expect(response.statusCode).toBe(200)
+        expect(response.json().connections.sseClients).toBe(1)
       })
     })
 
@@ -147,12 +160,15 @@ describe('Heartbeat Agent App', () => {
         mockPgClient.query.mockResolvedValueOnce({ rows: mockHeartbeats })
 
         const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
-        const response = await request(app)
-          .get('/heartbeat/recent')
-          .expect('Content-Type', /json/)
-          .expect(200)
 
-        expect(response.body).toEqual(mockHeartbeats)
+        const response = await app.inject({
+          method: 'GET',
+          url: '/heartbeat/recent',
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.headers['content-type']).toMatch(/json/)
+        expect(response.json()).toEqual(mockHeartbeats)
         expect(mockPgClient.query).toHaveBeenCalledWith(
           'SELECT * FROM heartbeats ORDER BY timestamp DESC LIMIT 10',
         )
@@ -162,12 +178,15 @@ describe('Heartbeat Agent App', () => {
         mockPgClient.query.mockRejectedValueOnce(new Error('Database error'))
 
         const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
-        const response = await request(app)
-          .get('/heartbeat/recent')
-          .expect('Content-Type', /json/)
-          .expect(500)
 
-        expect(response.body).toEqual({ error: 'Failed to fetch heartbeats' })
+        const response = await app.inject({
+          method: 'GET',
+          url: '/heartbeat/recent',
+        })
+
+        expect(response.statusCode).toBe(500)
+        expect(response.headers['content-type']).toMatch(/json/)
+        expect(response.json()).toEqual({ error: 'Failed to fetch heartbeats' })
       })
     })
   })
@@ -250,7 +269,7 @@ describe('Heartbeat Agent App', () => {
     it('should broadcast to SSE clients', async () => {
       const mockClient = {
         write: vi.fn(),
-      } as unknown as Response
+      } as unknown as ServerResponse
       sseClients.add(mockClient)
 
       mockPgClient.query.mockResolvedValueOnce({
