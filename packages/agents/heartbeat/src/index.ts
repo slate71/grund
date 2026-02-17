@@ -1,4 +1,4 @@
-import type { Response } from 'express'
+import type { ServerResponse } from 'node:http'
 import { Client } from 'pg'
 import { createClient } from 'redis'
 import cron from 'node-cron'
@@ -10,7 +10,7 @@ import {
   cleanupOldHeartbeats,
 } from './app'
 
-const PORT = process.env.PORT || 3001
+const PORT = parseInt(process.env.PORT || '3001', 10)
 
 // Validate required environment variables
 validateEnvironment()
@@ -26,7 +26,7 @@ const redisClient = createClient({
 })
 
 // Store for SSE clients
-const sseClients = new Set<Response>()
+const sseClients = new Set<ServerResponse>()
 
 // Track PostgreSQL connection status
 let isPostgresConnected = false
@@ -88,11 +88,10 @@ async function start() {
   const retentionDays = parseInt(process.env.HEARTBEAT_RETENTION_DAYS || '30')
   await cleanupOldHeartbeats(pgClient, retentionDays)
 
-  app.listen(PORT, () => {
-    console.log(`Heartbeat agent running on port ${PORT}`)
-    console.log(`SSE stream available at http://localhost:${PORT}/heartbeat/stream`)
-    console.log(`Retention policy: keeping last ${retentionDays} days of heartbeats`)
-  })
+  await app.listen({ port: PORT, host: '0.0.0.0' })
+  console.log(`Heartbeat agent running on port ${PORT}`)
+  console.log(`SSE stream available at http://localhost:${PORT}/heartbeat/stream`)
+  console.log(`Retention policy: keeping last ${retentionDays} days of heartbeats`)
 }
 
 start().catch(console.error)
