@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg: #0F1114;
+  --color-surface: #1A1D23;
+  --color-surface-2: #22262E;
+  --color-border: #2E3440;
+  --color-text: #E8ECF1;
+  --color-text-2: #9BA3B0;
+  --color-accent: #4A9EFF;
+  --color-accent-hover: #3B8AE6;
+  --color-section1: #EF4444;
+  --color-section2: #F59E0B;
+  --color-further: #8B5CF6;
+  --color-success: #10B981;
+
+  --font-family-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-family-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-family-sans);
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+  code,
+  .font-mono {
+    font-family: var(--font-family-mono);
+  }
+}

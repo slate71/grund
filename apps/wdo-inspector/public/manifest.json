@@ -1,0 +1,22 @@
+{
+  "name": "WDO Inspector",
+  "short_name": "WDO",
+  "description": "California 43M-41 Wood Destroying Organism inspection report",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F1114",
+  "theme_color": "#0F1114",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
