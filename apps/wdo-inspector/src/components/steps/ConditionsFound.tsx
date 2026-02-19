@@ -1,9 +1,9 @@
 import { Checkbox } from '../shared/Checkbox'
-import { useReportStore } from '../../store/useReportStore'
+import { useReportStore, type ReportState } from '../../store/useReportStore'
 
 export function ConditionsFound() {
-  const conditions = useReportStore((s) => s.report.conditions)
-  const updateCondition = useReportStore((s) => s.updateCondition)
+  const conditions = useReportStore((s: ReportState) => s.report.conditions)
+  const updateCondition = useReportStore((s: ReportState) => s.updateCondition)
 
   return (
     <div className="space-y-6">

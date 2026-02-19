@@ -1,0 +1,31 @@
+services:
+  wdo-inspector:
+    build: ./apps/wdo-inspector
+    container_name: grund-wdo-inspector
+    environment:
+      NODE_ENV: production
+    ports:
+      - '3002:80'
+    networks:
+      - grund-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:80/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "com.grund.app=wdo-inspector"
+      - "com.grund.type=pwa"
+
+  # Future apps will go here
+  # dashboard:
+  #   build: ./apps/dashboard
+  #   container_name: grund-dashboard
+  #   ports:
+  #     - '3000:3000'
+  #   ...
+
+networks:
+  grund-network:
+    external: false

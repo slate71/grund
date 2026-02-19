@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { useReportStore } from '../../store/useReportStore'
+import { useReportStore, type ReportState } from '../../store/useReportStore'
 import { FindingCard } from '../findings/FindingCard'
 import { CostSummary } from '../findings/CostSummary'
-import type { FindingCategory, FindingSection } from '../../types/report'
+import type { Finding, FindingCategory, FindingSection } from '../../types/report'
 
 export function Findings() {
-  const findings = useReportStore((s) => s.report.findings)
-  const addFinding = useReportStore((s) => s.addFinding)
-  const updateFinding = useReportStore((s) => s.updateFinding)
-  const removeFinding = useReportStore((s) => s.removeFinding)
+  const findings = useReportStore((s: ReportState) => s.report.findings)
+  const addFinding = useReportStore((s: ReportState) => s.addFinding)
+  const updateFinding = useReportStore((s: ReportState) => s.updateFinding)
+  const removeFinding = useReportStore((s: ReportState) => s.removeFinding)
 
   const [newCategory, setNewCategory] = useState<FindingCategory>('subterranean')
   const [newSection, setNewSection] = useState<FindingSection>('section1')
@@ -61,7 +61,7 @@ export function Findings() {
         </div>
       ) : (
         <div className="space-y-4">
-          {findings.map((f) => (
+          {findings.map((f: Finding) => (
             <FindingCard
               key={f.id}
               finding={f}

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  wdo-inspector:
+    build: .
+    container_name: wdo-inspector
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wdo-inspector.rule=Host(`wdo.yourdomain.com`)"
+      - "traefik.http.routers.wdo-inspector.entrypoints=websecure"
+      - "traefik.http.routers.wdo-inspector.tls.certresolver=letsencrypt"
+      - "traefik.http.services.wdo-inspector.loadbalancer.server.port=80"
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

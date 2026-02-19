@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useReportStore } from './store/useReportStore'
+import { useReportStore, type ReportState } from './store/useReportStore'
 import { TopBar } from './components/TopBar'
 import { StepIndicator } from './components/StepIndicator'
 import { ReportInfo } from './components/steps/ReportInfo'
@@ -12,11 +12,11 @@ import { ReviewSign } from './components/steps/ReviewSign'
 const STEPS = [ReportInfo, Parties, ConditionsFound, PropertyDiagram, Findings, ReviewSign]
 
 export function App() {
-  const currentStep = useReportStore((s) => s.currentStep)
-  const isLoading = useReportStore((s) => s.isLoading)
-  const loadFromDB = useReportStore((s) => s.loadFromDB)
-  const nextStep = useReportStore((s) => s.nextStep)
-  const prevStep = useReportStore((s) => s.prevStep)
+  const currentStep = useReportStore((s: ReportState) => s.currentStep)
+  const isLoading = useReportStore((s: ReportState) => s.isLoading)
+  const loadFromDB = useReportStore((s: ReportState) => s.loadFromDB)
+  const nextStep = useReportStore((s: ReportState) => s.nextStep)
+  const prevStep = useReportStore((s: ReportState) => s.prevStep)
 
   useEffect(() => {
     loadFromDB()

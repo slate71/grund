@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useReportStore } from '../../store/useReportStore'
+import { useReportStore, type ReportState } from '../../store/useReportStore'
 import { Input } from '../shared/Input'
 import { SignatureCanvas } from '../shared/SignatureCanvas'
 import { exportReportJSON } from '../../utils/reportExport'
+import type { Finding } from '../../types/report'
 
 const CATEGORY_LABELS: Record<string, string> = {
   subterranean: 'Subterranean Termites',
@@ -18,10 +19,10 @@ const SECTION_LABELS: Record<string, string> = {
 }
 
 export function ReviewSign() {
-  const report = useReportStore((s) => s.report)
-  const updateField = useReportStore((s) => s.updateField)
-  const updateCompany = useReportStore((s) => s.updateCompany)
-  const resetReport = useReportStore((s) => s.resetReport)
+  const report = useReportStore((s: ReportState) => s.report)
+  const updateField = useReportStore((s: ReportState) => s.updateField)
+  const updateCompany = useReportStore((s: ReportState) => s.updateCompany)
+  const resetReport = useReportStore((s: ReportState) => s.resetReport)
 
   const [submitted, setSubmitted] = useState(false)
   const [jsonDump, setJsonDump] = useState('')
@@ -153,7 +154,7 @@ export function ReviewSign() {
               <p className="text-sm text-text-2">No findings recorded</p>
             ) : (
               <div className="space-y-2">
-                {report.findings.map((f) => (
+                {report.findings.map((f: Finding) => (
                   <div key={f.id} className="flex items-start gap-2 text-sm">
                     <span
                       className={[
@@ -187,7 +188,7 @@ export function ReviewSign() {
             <div className="p-4">
               <p className="text-xs text-text-2 mb-1">Total Estimated Cost</p>
               <p className="font-mono text-lg font-bold text-text">
-                ${report.findings.reduce((sum, f) => sum + f.cost, 0).toLocaleString()}
+                ${report.findings.reduce((sum: number, f: Finding) => sum + f.cost, 0).toLocaleString()}
               </p>
             </div>
           )}
