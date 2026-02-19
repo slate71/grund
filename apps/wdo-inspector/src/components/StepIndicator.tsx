@@ -1,10 +1,10 @@
-import { useReportStore } from '../store/useReportStore'
+import { useReportStore, type ReportState } from '../store/useReportStore'
 
 const STEPS = ['Report Info', 'Parties', 'Conditions', 'Diagram', 'Findings', 'Review']
 
 export function StepIndicator() {
-  const currentStep = useReportStore((s) => s.currentStep)
-  const setStep = useReportStore((s) => s.setStep)
+  const currentStep = useReportStore((s: ReportState) => s.currentStep)
+  const setStep = useReportStore((s: ReportState) => s.setStep)
 
   return (
     <div className="bg-surface border-b border-border px-4 py-3">

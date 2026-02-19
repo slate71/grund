@@ -1,10 +1,10 @@
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
-import { useReportStore } from '../store/useReportStore'
+import { useReportStore, type ReportState } from '../store/useReportStore'
 
 export function TopBar() {
   const isOnline = useOnlineStatus()
-  const lastSaved = useReportStore((s) => s.lastSaved)
-  const reportNumber = useReportStore((s) => s.report.reportNumber)
+  const lastSaved = useReportStore((s: ReportState) => s.lastSaved)
+  const reportNumber = useReportStore((s: ReportState) => s.report.reportNumber)
 
   const savedLabel = lastSaved
     ? `Saved ${new Date(lastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`

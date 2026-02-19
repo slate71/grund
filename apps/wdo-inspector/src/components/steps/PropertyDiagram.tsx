@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import { useReportStore } from '../../store/useReportStore'
+import { useReportStore, type ReportState } from '../../store/useReportStore'
 import { Canvas } from '../diagram/Canvas'
 import { Toolbar } from '../diagram/Toolbar'
 import type { DiagramTool } from '../../types/report'
 
 export function PropertyDiagram() {
-  const elements = useReportStore((s) => s.report.diagramElements)
-  const addElement = useReportStore((s) => s.addDiagramElement)
-  const updateElement = useReportStore((s) => s.updateDiagramElement)
-  const removeElement = useReportStore((s) => s.removeDiagramElement)
-  const clearDiagram = useReportStore((s) => s.clearDiagram)
+  const elements = useReportStore((s: ReportState) => s.report.diagramElements)
+  const addElement = useReportStore((s: ReportState) => s.addDiagramElement)
+  const updateElement = useReportStore((s: ReportState) => s.updateDiagramElement)
+  const removeElement = useReportStore((s: ReportState) => s.removeDiagramElement)
+  const clearDiagram = useReportStore((s: ReportState) => s.clearDiagram)
 
   const [activeTool, setActiveTool] = useState<DiagramTool>('rectangle')
 

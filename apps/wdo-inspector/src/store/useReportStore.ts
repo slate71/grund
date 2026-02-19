@@ -11,7 +11,7 @@ import { createEmptyReport } from '../types/report'
 import { generateFindingLabel, recalculateLabels } from '../utils/findingLabel'
 import { saveDraft, loadDraft, clearDraft } from '../hooks/useIndexedDB'
 
-interface ReportState {
+export interface ReportState {
   report: WDOReport
   currentStep: number
   lastSaved: number | null
@@ -52,7 +52,7 @@ function persist(report: WDOReport): number {
   return now
 }
 
-export const useReportStore = create<ReportState>((set, _get) => ({
+export const useReportStore = create<ReportState>()((set, _get) => ({
   report: createEmptyReport(),
   currentStep: 0,
   lastSaved: null,

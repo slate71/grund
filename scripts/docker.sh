@@ -15,7 +15,9 @@ function print_usage() {
     echo "  up-infra        - Start infrastructure services (PostgreSQL, Redis)"
     echo "  up-agents       - Start all agents (uses existing images)"
     echo "  rebuild-agents  - Rebuild and start agents (forces fresh build)"
-    echo "  up-all          - Start everything (infra + agents)"
+    echo "  up-apps         - Start all apps (WDO Inspector, etc.)"
+    echo "  rebuild-apps    - Rebuild and start apps"
+    echo "  up-all          - Start everything (infra + agents + apps)"
     echo "  down            - Stop everything"
     echo "  logs [name]     - Show logs (optional: specify service name)"
     echo "  restart         - Restart agents only"
@@ -36,19 +38,27 @@ case "$1" in
         echo -e "${GREEN}Rebuilding and starting agents...${NC}"
         docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml up -d --build heartbeat-agent
         ;;
+    "up-apps")
+        echo -e "${GREEN}Starting apps...${NC}"
+        docker-compose -f docker-compose.base.yml -f docker-compose.apps.yml up -d wdo-inspector
+        ;;
+    "rebuild-apps")
+        echo -e "${GREEN}Rebuilding and starting apps...${NC}"
+        docker-compose -f docker-compose.base.yml -f docker-compose.apps.yml up -d --build wdo-inspector
+        ;;
     "up-all")
         echo -e "${GREEN}Starting everything...${NC}"
-        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml up -d
+        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml -f docker-compose.apps.yml up -d
         ;;
     "down")
         echo -e "${YELLOW}Stopping everything...${NC}"
-        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml down
+        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml -f docker-compose.apps.yml down
         ;;
     "logs")
         if [ -n "$2" ]; then
-            docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml logs -f "$2"
+            docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml -f docker-compose.apps.yml logs -f "$2"
         else
-            docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml logs -f
+            docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml -f docker-compose.apps.yml logs -f
         fi
         ;;
     "restart")
@@ -56,7 +66,7 @@ case "$1" in
         docker-compose -f docker-compose.agents.yml restart
         ;;
     "status")
-        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml ps
+        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml -f docker-compose.apps.yml ps
         ;;
     *)
         print_usage

@@ -58,3 +58,6 @@ cspell.json
 !/clients/.gitkeep
 !/clients/README.md
 !/clients/_template/
+
+# Prompts directory
+/prompts/

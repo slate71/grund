@@ -1,11 +1,11 @@
 import { Input } from '../shared/Input'
-import { useReportStore } from '../../store/useReportStore'
+import { useReportStore, type ReportState } from '../../store/useReportStore'
 
 export function Parties() {
-  const report = useReportStore((s) => s.report)
-  const updateOrderedBy = useReportStore((s) => s.updateOrderedBy)
-  const updatePropertyOwner = useReportStore((s) => s.updatePropertyOwner)
-  const updateReportSentTo = useReportStore((s) => s.updateReportSentTo)
+  const report = useReportStore((s: ReportState) => s.report)
+  const updateOrderedBy = useReportStore((s: ReportState) => s.updateOrderedBy)
+  const updatePropertyOwner = useReportStore((s: ReportState) => s.updatePropertyOwner)
+  const updateReportSentTo = useReportStore((s: ReportState) => s.updateReportSentTo)
 
   return (
     <div className="space-y-8">

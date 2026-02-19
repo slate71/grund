@@ -1,9 +1,9 @@
 import { Input } from '../shared/Input'
-import { useReportStore } from '../../store/useReportStore'
+import { useReportStore, type ReportState } from '../../store/useReportStore'
 
 export function ReportInfo() {
-  const report = useReportStore((s) => s.report)
-  const updateField = useReportStore((s) => s.updateField)
+  const report = useReportStore((s: ReportState) => s.report)
+  const updateField = useReportStore((s: ReportState) => s.updateField)
 
   return (
     <div className="space-y-6">
