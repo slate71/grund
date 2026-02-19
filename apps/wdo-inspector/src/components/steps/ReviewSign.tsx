@@ -188,7 +188,9 @@ export function ReviewSign() {
             <div className="p-4">
               <p className="text-xs text-text-2 mb-1">Total Estimated Cost</p>
               <p className="font-mono text-lg font-bold text-text">
-                ${report.findings.reduce((sum: number, f: Finding) => sum + f.cost, 0).toLocaleString()}
+                ${report.findings
+                  .reduce((sum: number, f: Finding) => sum + f.cost, 0)
+                  .toLocaleString()}
               </p>
             </div>
           )}
