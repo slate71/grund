@@ -1,6 +1,8 @@
 services:
   wdo-inspector:
-    build: ./apps/wdo-inspector
+    build:
+      context: .
+      dockerfile: ./apps/wdo-inspector/Dockerfile
     container_name: grund-wdo-inspector
     environment:
       NODE_ENV: production
