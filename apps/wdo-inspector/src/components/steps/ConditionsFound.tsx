@@ -9,9 +9,7 @@ export function ConditionsFound() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-text">Conditions Found</h2>
-        <p className="text-sm text-text-2 mt-1">
-          Check all conditions observed during inspection
-        </p>
+        <p className="text-sm text-text-2 mt-1">Check all conditions observed during inspection</p>
       </div>
 
       <div className="bg-surface rounded-xl border border-border p-4 space-y-1">
@@ -52,10 +50,9 @@ export function ConditionsFound() {
 
       <div className="bg-surface-2 rounded-lg p-4">
         <p className="text-xs text-text-2 leading-relaxed">
-          <span className="font-semibold text-text">Note:</span> Conditions
-          checked here should correspond to detailed findings in Step 5. Section
-          I items are active infestations requiring action for clearance. Section
-          II items are preventive recommendations.
+          <span className="font-semibold text-text">Note:</span> Conditions checked here should
+          correspond to detailed findings in Step 5. Section I items are active infestations
+          requiring action for clearance. Section II items are preventive recommendations.
         </p>
       </div>
     </div>

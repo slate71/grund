@@ -145,7 +145,6 @@ describe('Heartbeat Agent App', () => {
       })
     })
 
-
     describe('Recent Heartbeats Endpoint', () => {
       it('should return heartbeats from database', async () => {
         const mockHeartbeats = [

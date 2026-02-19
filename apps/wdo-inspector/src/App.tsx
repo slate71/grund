@@ -9,14 +9,7 @@ import { PropertyDiagram } from './components/steps/PropertyDiagram'
 import { Findings } from './components/steps/Findings'
 import { ReviewSign } from './components/steps/ReviewSign'
 
-const STEPS = [
-  ReportInfo,
-  Parties,
-  ConditionsFound,
-  PropertyDiagram,
-  Findings,
-  ReviewSign,
-]
+const STEPS = [ReportInfo, Parties, ConditionsFound, PropertyDiagram, Findings, ReviewSign]
 
 export function App() {
   const currentStep = useReportStore((s) => s.currentStep)

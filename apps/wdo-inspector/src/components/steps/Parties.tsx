@@ -11,16 +11,12 @@ export function Parties() {
     <div className="space-y-8">
       <div>
         <h2 className="text-lg font-semibold text-text">Parties & Contacts</h2>
-        <p className="text-sm text-text-2 mt-1">
-          Who ordered, owns, and receives this report
-        </p>
+        <p className="text-sm text-text-2 mt-1">Who ordered, owns, and receives this report</p>
       </div>
 
       {/* Ordered By */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">
-          Ordered By
-        </h3>
+        <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">Ordered By</h3>
         <Input
           label="Name"
           value={report.orderedBy.name}

@@ -42,16 +42,12 @@ export function FindingCard({ finding, onUpdate, onRemove }: FindingCardProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span
-            className={`font-mono text-sm font-bold px-2 py-0.5 rounded ${labelBg}`}
-          >
+          <span className={`font-mono text-sm font-bold px-2 py-0.5 rounded ${labelBg}`}>
             {finding.label}
           </span>
           <select
             value={finding.category}
-            onChange={(e) =>
-              onUpdate({ category: e.target.value as FindingCategory })
-            }
+            onChange={(e) => onUpdate({ category: e.target.value as FindingCategory })}
             className="bg-surface-2 border border-border rounded-md px-2 py-1 text-sm text-text focus:outline-none focus:border-accent"
           >
             {CATEGORY_OPTIONS.map((opt) => (

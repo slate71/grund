@@ -16,13 +16,7 @@ const TOOLS: { id: DiagramTool; label: string; icon: string }[] = [
   { id: 'pin', label: 'Pin', icon: '◉' },
 ]
 
-export function Toolbar({
-  activeTool,
-  onToolChange,
-  onUndo,
-  onClear,
-  canUndo,
-}: ToolbarProps) {
+export function Toolbar({ activeTool, onToolChange, onUndo, onClear, canUndo }: ToolbarProps) {
   return (
     <div className="flex items-center gap-1 bg-surface rounded-lg border border-border p-1">
       {TOOLS.map((tool) => (

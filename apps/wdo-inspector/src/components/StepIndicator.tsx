@@ -1,13 +1,6 @@
 import { useReportStore } from '../store/useReportStore'
 
-const STEPS = [
-  'Report Info',
-  'Parties',
-  'Conditions',
-  'Diagram',
-  'Findings',
-  'Review',
-]
+const STEPS = ['Report Info', 'Parties', 'Conditions', 'Diagram', 'Findings', 'Review']
 
 export function StepIndicator() {
   const currentStep = useReportStore((s) => s.currentStep)

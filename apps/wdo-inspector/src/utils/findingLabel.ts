@@ -12,9 +12,7 @@ export function generateFindingLabel(
   existingFindings: Finding[],
 ): string {
   const prefix = CATEGORY_PREFIX[category]
-  const sameCategoryCount = existingFindings.filter(
-    (f) => f.category === category,
-  ).length
+  const sameCategoryCount = existingFindings.filter((f) => f.category === category).length
   const letter = String.fromCharCode(65 + sameCategoryCount) // A, B, C...
   return `${prefix}${letter}`
 }

@@ -30,9 +30,7 @@ export function CostSummary({ findings }: CostSummaryProps) {
 
   return (
     <div className="bg-surface rounded-lg border border-border p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">
-        Cost Summary
-      </h3>
+      <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">Cost Summary</h3>
       <div className="space-y-2">
         <div className="flex justify-between items-center text-sm">
           <span className="flex items-center gap-2">
@@ -57,9 +55,7 @@ export function CostSummary({ findings }: CostSummaryProps) {
             <span className="w-2.5 h-2.5 rounded-full bg-further" />
             Further Inspection
           </span>
-          <span className="font-mono text-further font-medium">
-            {formatCurrency(furtherTotal)}
-          </span>
+          <span className="font-mono text-further font-medium">{formatCurrency(furtherTotal)}</span>
         </div>
         <div className="border-t border-border pt-2 flex justify-between items-center">
           <span className="text-sm font-semibold text-text">Grand Total</span>

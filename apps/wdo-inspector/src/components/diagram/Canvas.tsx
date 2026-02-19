@@ -14,12 +14,7 @@ const PIN_COLORS: Record<string, string> = {
   further: '#8B5CF6',
 }
 
-export function Canvas({
-  elements,
-  activeTool,
-  onAddElement,
-  onUpdateElement,
-}: CanvasProps) {
+export function Canvas({ elements, activeTool, onAddElement, onUpdateElement }: CanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
@@ -115,6 +110,55 @@ export function Canvas({
     [activeTool, elements, getCoords, onAddElement, pinSection],
   )
 
+  const redraw = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+    const rect = containerRef.current!.getBoundingClientRect()
+    canvas.width = rect.width * 2
+    canvas.height = rect.height * 2
+    ctx.scale(2, 2)
+
+    ctx.clearRect(0, 0, rect.width, rect.height)
+    ctx.save()
+    ctx.translate(offset.x, offset.y)
+    ctx.scale(scale, scale)
+
+    // Draw grid
+    ctx.strokeStyle = '#2E3440'
+    ctx.lineWidth = 0.5
+    const gridSize = 20
+    const startX = -offset.x / scale
+    const startY = -offset.y / scale
+    const endX = (rect.width - offset.x) / scale
+    const endY = (rect.height - offset.y) / scale
+
+    for (let x = Math.floor(startX / gridSize) * gridSize; x < endX; x += gridSize) {
+      ctx.beginPath()
+      ctx.moveTo(x, startY)
+      ctx.lineTo(x, endY)
+      ctx.stroke()
+    }
+    for (let y = Math.floor(startY / gridSize) * gridSize; y < endY; y += gridSize) {
+      ctx.beginPath()
+      ctx.moveTo(startX, y)
+      ctx.lineTo(endX, y)
+      ctx.stroke()
+    }
+
+    // Draw saved elements
+    for (const el of elements) {
+      drawElement(ctx, el, el.id === selectedId)
+    }
+
+    // Draw current element being created
+    if (currentElement.current) {
+      drawElement(ctx, currentElement.current, false)
+    }
+
+    ctx.restore()
+  }, [elements, offset, scale, selectedId])
+
   const handleMove = useCallback(
     (e: React.TouchEvent | React.MouseEvent) => {
       // Handle pinch-to-zoom
@@ -176,7 +220,7 @@ export function Canvas({
 
       redraw()
     },
-    [activeTool, isDrawing, getCoords, onUpdateElement, scale, selectedId],
+    [activeTool, isDrawing, getCoords, onUpdateElement, scale, selectedId, redraw],
   )
 
   const handleEnd = useCallback(
@@ -213,55 +257,6 @@ export function Canvas({
     },
     [activeTool, isDrawing, onAddElement],
   )
-
-  const redraw = useCallback(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')!
-    const rect = containerRef.current!.getBoundingClientRect()
-    canvas.width = rect.width * 2
-    canvas.height = rect.height * 2
-    ctx.scale(2, 2)
-
-    ctx.clearRect(0, 0, rect.width, rect.height)
-    ctx.save()
-    ctx.translate(offset.x, offset.y)
-    ctx.scale(scale, scale)
-
-    // Draw grid
-    ctx.strokeStyle = '#2E3440'
-    ctx.lineWidth = 0.5
-    const gridSize = 20
-    const startX = -offset.x / scale
-    const startY = -offset.y / scale
-    const endX = (rect.width - offset.x) / scale
-    const endY = (rect.height - offset.y) / scale
-
-    for (let x = Math.floor(startX / gridSize) * gridSize; x < endX; x += gridSize) {
-      ctx.beginPath()
-      ctx.moveTo(x, startY)
-      ctx.lineTo(x, endY)
-      ctx.stroke()
-    }
-    for (let y = Math.floor(startY / gridSize) * gridSize; y < endY; y += gridSize) {
-      ctx.beginPath()
-      ctx.moveTo(startX, y)
-      ctx.lineTo(endX, y)
-      ctx.stroke()
-    }
-
-    // Draw saved elements
-    for (const el of elements) {
-      drawElement(ctx, el, el.id === selectedId)
-    }
-
-    // Draw current element being created
-    if (currentElement.current) {
-      drawElement(ctx, currentElement.current, false)
-    }
-
-    ctx.restore()
-  }, [elements, offset, scale, selectedId])
 
   useEffect(() => {
     redraw()
@@ -301,11 +296,7 @@ export function Canvas({
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: PIN_COLORS[s] }}
               />
-              {s === 'section1'
-                ? 'Section I'
-                : s === 'section2'
-                  ? 'Section II'
-                  : 'Further'}
+              {s === 'section1' ? 'Section I' : s === 'section2' ? 'Section II' : 'Further'}
             </button>
           ))}
         </div>
@@ -331,11 +322,7 @@ export function Canvas({
   )
 }
 
-function drawElement(
-  ctx: CanvasRenderingContext2D,
-  el: DiagramElement,
-  selected: boolean,
-) {
+function drawElement(ctx: CanvasRenderingContext2D, el: DiagramElement, selected: boolean) {
   switch (el.type) {
     case 'rectangle': {
       ctx.strokeStyle = selected ? '#4A9EFF' : '#9BA3B0'
@@ -387,11 +374,7 @@ function drawElement(
   }
 }
 
-function findElementAt(
-  elements: DiagramElement[],
-  x: number,
-  y: number,
-): DiagramElement | null {
+function findElementAt(elements: DiagramElement[], x: number, y: number): DiagramElement | null {
   // Search in reverse (top elements first)
   for (let i = elements.length - 1; i >= 0; i--) {
     const el = elements[i]
@@ -427,9 +410,12 @@ function findElementAt(
 }
 
 function pointToLineDistance(
-  px: number, py: number,
-  x1: number, y1: number,
-  x2: number, y2: number,
+  px: number,
+  py: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
 ): number {
   const dx = x2 - x1
   const dy = y2 - y1

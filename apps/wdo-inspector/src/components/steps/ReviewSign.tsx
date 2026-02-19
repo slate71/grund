@@ -36,13 +36,7 @@ export function ReviewSign() {
       <div className="space-y-6">
         <div className="text-center py-8">
           <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-4">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 32 32"
-              fill="none"
-              className="text-success"
-            >
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="text-success">
               <path
                 d="M22 12L14 20L10 16"
                 stroke="currentColor"
@@ -59,9 +53,7 @@ export function ReviewSign() {
         </div>
 
         <div className="bg-surface rounded-lg border border-border p-4">
-          <h3 className="text-sm font-semibold text-text-2 mb-2">
-            JSON Export
-          </h3>
+          <h3 className="text-sm font-semibold text-text-2 mb-2">JSON Export</h3>
           <pre className="text-xs font-mono text-text-2 overflow-x-auto max-h-[300px] overflow-y-auto whitespace-pre-wrap break-all">
             {jsonDump}
           </pre>
@@ -84,9 +76,7 @@ export function ReviewSign() {
     <div className="space-y-8">
       <div>
         <h2 className="text-lg font-semibold text-text">Review & Sign</h2>
-        <p className="text-sm text-text-2 mt-1">
-          Review all information, then sign and submit
-        </p>
+        <p className="text-sm text-text-2 mt-1">Review all information, then sign and submit</p>
       </div>
 
       {/* Report Summary */}
@@ -99,9 +89,7 @@ export function ReviewSign() {
           {/* Property */}
           <div className="p-4">
             <p className="text-xs text-text-2 mb-1">Property</p>
-            <p className="text-sm text-text font-medium">
-              {report.propertyAddress || '—'}
-            </p>
+            <p className="text-sm text-text font-medium">{report.propertyAddress || '—'}</p>
             <p className="text-sm text-text-2">
               {[report.propertyCity, report.propertyState, report.propertyZip]
                 .filter(Boolean)
@@ -113,15 +101,11 @@ export function ReviewSign() {
           <div className="p-4 grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-text-2 mb-1">Ordered By</p>
-              <p className="text-sm text-text">
-                {report.orderedBy.name || '—'}
-              </p>
+              <p className="text-sm text-text">{report.orderedBy.name || '—'}</p>
             </div>
             <div>
               <p className="text-xs text-text-2 mb-1">Property Owner</p>
-              <p className="text-sm text-text">
-                {report.propertyOwner.name || '—'}
-              </p>
+              <p className="text-sm text-text">{report.propertyOwner.name || '—'}</p>
             </div>
           </div>
 
@@ -145,9 +129,7 @@ export function ReviewSign() {
                 </span>
               )}
               {report.conditions.otherFindings && (
-                <span className="text-xs bg-surface-2 text-text-2 px-2 py-1 rounded">
-                  Other
-                </span>
+                <span className="text-xs bg-surface-2 text-text-2 px-2 py-1 rounded">Other</span>
               )}
               {report.conditions.furtherInspectionNeeded && (
                 <span className="text-xs bg-further/15 text-further px-2 py-1 rounded">
@@ -159,27 +141,20 @@ export function ReviewSign() {
                 !report.conditions.fungusDryrot &&
                 !report.conditions.otherFindings &&
                 !report.conditions.furtherInspectionNeeded && (
-                  <span className="text-xs text-text-2">
-                    No conditions checked
-                  </span>
+                  <span className="text-xs text-text-2">No conditions checked</span>
                 )}
             </div>
           </div>
 
           {/* Findings */}
           <div className="p-4">
-            <p className="text-xs text-text-2 mb-2">
-              Findings ({report.findings.length})
-            </p>
+            <p className="text-xs text-text-2 mb-2">Findings ({report.findings.length})</p>
             {report.findings.length === 0 ? (
               <p className="text-sm text-text-2">No findings recorded</p>
             ) : (
               <div className="space-y-2">
                 {report.findings.map((f) => (
-                  <div
-                    key={f.id}
-                    className="flex items-start gap-2 text-sm"
-                  >
+                  <div key={f.id} className="flex items-start gap-2 text-sm">
                     <span
                       className={[
                         'font-mono text-xs font-bold px-1.5 py-0.5 rounded flex-shrink-0',
@@ -193,12 +168,8 @@ export function ReviewSign() {
                       {f.label}
                     </span>
                     <div className="min-w-0">
-                      <span className="text-text">
-                        {f.finding || CATEGORY_LABELS[f.category]}
-                      </span>
-                      <span className="text-text-2 ml-1">
-                        — {SECTION_LABELS[f.section]}
-                      </span>
+                      <span className="text-text">{f.finding || CATEGORY_LABELS[f.category]}</span>
+                      <span className="text-text-2 ml-1">— {SECTION_LABELS[f.section]}</span>
                       {f.cost > 0 && (
                         <span className="text-text-2 ml-1 font-mono text-xs">
                           ${f.cost.toLocaleString()}
@@ -216,10 +187,7 @@ export function ReviewSign() {
             <div className="p-4">
               <p className="text-xs text-text-2 mb-1">Total Estimated Cost</p>
               <p className="font-mono text-lg font-bold text-text">
-                $
-                {report.findings
-                  .reduce((sum, f) => sum + f.cost, 0)
-                  .toLocaleString()}
+                ${report.findings.reduce((sum, f) => sum + f.cost, 0).toLocaleString()}
               </p>
             </div>
           )}
@@ -228,9 +196,7 @@ export function ReviewSign() {
 
       {/* Inspector Info */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">
-          Inspector
-        </h3>
+        <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">Inspector</h3>
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Inspector Name"
@@ -252,9 +218,7 @@ export function ReviewSign() {
 
       {/* Company Info */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">
-          Company
-        </h3>
+        <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">Company</h3>
         <Input
           label="Company Name"
           value={report.company.name}
@@ -287,9 +251,7 @@ export function ReviewSign() {
 
       {/* Signature */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">
-          Signature
-        </h3>
+        <h3 className="text-sm font-semibold text-text-2 uppercase tracking-wider">Signature</h3>
         <SignatureCanvas
           value={report.signatureData}
           onChange={(v) => updateField('signatureData', v)}

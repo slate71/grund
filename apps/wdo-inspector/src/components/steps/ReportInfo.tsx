@@ -8,12 +8,8 @@ export function ReportInfo() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-text">
-          Report Info & Property
-        </h2>
-        <p className="text-sm text-text-2 mt-1">
-          Basic inspection and property details
-        </p>
+        <h2 className="text-lg font-semibold text-text">Report Info & Property</h2>
+        <p className="text-sm text-text-2 mt-1">Basic inspection and property details</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

@@ -93,13 +93,12 @@ export function SignatureCanvas({ value, onChange }: SignatureCanvasProps) {
     } else {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only restore on mount
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-text-2">
-        Signature
-      </label>
+      <label className="block text-sm font-medium text-text-2">Signature</label>
       <div className="relative rounded-lg border-2 border-dashed border-border bg-surface-2 overflow-hidden">
         <canvas
           ref={canvasRef}
@@ -116,9 +115,7 @@ export function SignatureCanvas({ value, onChange }: SignatureCanvasProps) {
         />
         {!value && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-text-2/40 text-sm">
-              Sign here
-            </span>
+            <span className="text-text-2/40 text-sm">Sign here</span>
           </div>
         )}
       </div>

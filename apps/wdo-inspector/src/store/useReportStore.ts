@@ -171,9 +171,7 @@ export const useReportStore = create<ReportState>((set, _get) => ({
 
   updateFinding: (id, updates) =>
     set((s) => {
-      let findings = s.report.findings.map((f) =>
-        f.id === id ? { ...f, ...updates } : f,
-      )
+      let findings = s.report.findings.map((f) => (f.id === id ? { ...f, ...updates } : f))
       if (updates.category) {
         findings = recalculateLabels(findings)
       }
@@ -183,9 +181,7 @@ export const useReportStore = create<ReportState>((set, _get) => ({
 
   removeFinding: (id) =>
     set((s) => {
-      const findings = recalculateLabels(
-        s.report.findings.filter((f) => f.id !== id),
-      )
+      const findings = recalculateLabels(s.report.findings.filter((f) => f.id !== id))
       const report = { ...s.report, findings }
       return { report, lastSaved: persist(report) }
     }),

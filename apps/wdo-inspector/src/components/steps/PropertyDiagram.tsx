@@ -23,9 +23,7 @@ export function PropertyDiagram() {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-text">Property Diagram</h2>
-        <p className="text-sm text-text-2 mt-1">
-          Draw a floor plan and mark finding locations
-        </p>
+        <p className="text-sm text-text-2 mt-1">Draw a floor plan and mark finding locations</p>
       </div>
 
       <Toolbar
@@ -59,8 +57,8 @@ export function PropertyDiagram() {
       </div>
 
       <p className="text-xs text-text-2">
-        Pinch to zoom. Use the select tool to drag elements. Tap with pin tool
-        to drop color-coded markers.
+        Pinch to zoom. Use the select tool to drag elements. Tap with pin tool to drop color-coded
+        markers.
       </p>
     </div>
   )

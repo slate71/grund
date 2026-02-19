@@ -16,9 +16,7 @@ export function Findings() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-text">
-          Findings & Recommendations
-        </h2>
+        <h2 className="text-lg font-semibold text-text">Findings & Recommendations</h2>
         <p className="text-sm text-text-2 mt-1">
           Document each finding with category, section, and recommendation
         </p>
@@ -59,9 +57,7 @@ export function Findings() {
       {findings.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-text-2 text-sm">No findings yet</p>
-          <p className="text-text-2/60 text-xs mt-1">
-            Add findings using the controls above
-          </p>
+          <p className="text-text-2/60 text-xs mt-1">Add findings using the controls above</p>
         </div>
       ) : (
         <div className="space-y-4">
