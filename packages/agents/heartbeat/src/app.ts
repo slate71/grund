@@ -2,6 +2,8 @@ import Fastify from 'fastify'
 import type { FastifyInstance } from 'fastify'
 import type { ServerResponse } from 'node:http'
 import { Client } from 'pg'
+import { createDb, contacts } from '@grund/db'
+import { and, lte, or, eq } from 'drizzle-orm'
 
 // Validate required environment variables
 export function validateEnvironment() {
@@ -129,6 +131,12 @@ export function createHeartbeatFunction(
       })
 
       console.log(`Heartbeat sent at ${timestamp}`)
+
+      // Check for due contact followups
+      const dueCount = await checkContactFollowups(redisClient)
+      if (dueCount > 0) {
+        console.log(`Contact followup check: ${dueCount} contacts need attention`)
+      }
     } catch (error) {
       console.error('Failed to send heartbeat:', error)
     } finally {
@@ -180,6 +188,62 @@ export async function cleanupOldHeartbeats(
     return deletedCount
   } catch (error) {
     console.error('Failed to cleanup old heartbeats:', error)
+    return 0
+  }
+}
+
+// Check for due followups
+export async function checkContactFollowups(redisClient: any) {
+  try {
+    const db = createDb(process.env.DATABASE_URL!)
+
+    // Get contacts that need follow-up (contacted/replied 3+ days ago)
+    const daysThreshold = 3
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - daysThreshold)
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0]
+
+    const dueContacts = await db.select()
+      .from(contacts)
+      .where(
+        and(
+          lte(contacts.last_touch_date, cutoffDateStr),
+          or(
+            eq(contacts.status, 'contacted'),
+            eq(contacts.status, 'replied')
+          )
+        )
+      )
+      .orderBy(contacts.last_touch_date)
+
+    if (dueContacts.length > 0) {
+      // Push each contact to Redis for processing
+      for (const contact of dueContacts) {
+        await redisClient.rPush(
+          'grund:followups:due',
+          JSON.stringify({
+            id: contact.id,
+            name: contact.name,
+            company: contact.company,
+            channel: contact.channel,
+            last_touch_date: contact.last_touch_date,
+            status: contact.status,
+            next_action: contact.next_action,
+            timestamp: new Date().toISOString(),
+          })
+        )
+      }
+
+      console.log(`Found ${dueContacts.length} contacts due for follow-up`)
+      console.log('Due contacts pushed to Redis queue: grund:followups:due')
+
+      // Set expiration on the list (24 hours)
+      await redisClient.expire('grund:followups:due', 86400)
+    }
+
+    return dueContacts.length
+  } catch (error) {
+    console.error('Failed to check contact followups:', error)
     return 0
   }
 }
