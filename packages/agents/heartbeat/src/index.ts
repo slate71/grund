@@ -8,6 +8,7 @@ import {
   createHeartbeatFunction,
   initializeConnections,
   cleanupOldHeartbeats,
+  checkContactFollowups,
 } from './app'
 
 const PORT = parseInt(process.env.PORT || '3001', 10)
@@ -78,6 +79,13 @@ async function start() {
     const retentionDays = parseInt(process.env.HEARTBEAT_RETENTION_DAYS || '30')
     const deletedCount = await cleanupOldHeartbeats(pgClient, retentionDays)
     console.log(`Daily cleanup completed. Removed ${deletedCount} old records.`)
+  })
+
+  // Schedule contact followup check daily at 9 AM
+  cron.schedule('0 9 * * *', async () => {
+    console.log('Running daily contact followup check...')
+    const dueCount = await checkContactFollowups(redisClient)
+    console.log(`Daily followup check completed. ${dueCount} contacts need attention.`)
   })
 
   // Send initial heartbeat on startup

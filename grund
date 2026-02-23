@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Grund CLI - Contact pipeline management
+# Usage: grund contact <command> [options]
+
+COMMAND=$1
+shift
+
+case "$COMMAND" in
+  contact)
+    # Forward to the contact CLI
+    bun run packages/cli-contacts/src/index.ts "$@"
+    ;;
+  *)
+    echo "Usage: grund <command> [options]"
+    echo ""
+    echo "Commands:"
+    echo "  contact    Manage contact pipeline"
+    echo ""
+    echo "Contact commands:"
+    echo "  add        Add a new contact"
+    echo "  list       List contacts"
+    echo "  status     Update contact status"
+    echo "  log        Log a contact event"
+    echo ""
+    echo "Examples:"
+    echo "  grund contact add -n 'John Doe' -c 'Acme Corp' --channel linkedin"
+    echo "  grund contact list --due"
+    echo "  grund contact status <id> replied"
+    echo "  grund contact log <id> outreach_sent -n 'Sent connection request'"
+    exit 1
+    ;;
+esac
