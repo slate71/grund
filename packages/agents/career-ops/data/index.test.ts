@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import type { PipelineData, NetworkData, Opportunity, Contact } from './index'
+import type { PipelineData, NetworkData } from './index'
 import {
   getOpportunitiesByStage,
   getContactsByRelationship,

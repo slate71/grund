@@ -64,7 +64,7 @@ export function EventDetail({ eventId, onBack }: EventDetailProps) {
             <div>
               <span className="text-xs font-medium uppercase text-gray-500">Signals</span>
               <div className="mt-1 flex flex-wrap gap-1">
-                {event.signals?.map((s: any) => (
+                {event.signals?.map((s: string) => (
                   <span key={s} className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-700">
                     {s}
                   </span>

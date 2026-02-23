@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
 import type { ServerResponse } from 'node:http'
 import {
   validateEnvironment,
@@ -6,10 +6,29 @@ import {
   createHeartbeatFunction,
   initializeConnections,
 } from './app'
+import type { Client } from 'pg'
+
+interface MockPgClient {
+  connect: Mock
+  query: Mock
+  on: Mock
+  end: Mock
+}
+
+interface MockRedisClient {
+  connect: Mock
+  publish: Mock
+  isReady: boolean
+  on: Mock
+}
+
+// Cast helpers to pass mocks to production functions
+const asPg = (mock: MockPgClient) => mock as unknown as Client
+const asRedis = (mock: MockRedisClient) => mock as unknown as import('./app').RedisClient
 
 describe('Heartbeat Agent App', () => {
-  let mockPgClient: any
-  let mockRedisClient: any
+  let mockPgClient: MockPgClient
+  let mockRedisClient: MockRedisClient
   let sseClients: Set<ServerResponse>
   let isPostgresConnected: boolean
   let isHeartbeatRunning: { value: boolean }
@@ -78,7 +97,12 @@ describe('Heartbeat Agent App', () => {
 
   describe('createApp', () => {
     it('should create a fastify app with all endpoints', () => {
-      const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+      const app = createApp(
+        asPg(mockPgClient),
+        asRedis(mockRedisClient),
+        sseClients,
+        () => isPostgresConnected,
+      )
       expect(app).toBeDefined()
       expect(app.get).toBeDefined()
       expect(app.listen).toBeDefined()
@@ -86,7 +110,12 @@ describe('Heartbeat Agent App', () => {
 
     describe('Health Endpoint', () => {
       it('should return healthy status', async () => {
-        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const app = createApp(
+          asPg(mockPgClient),
+          asRedis(mockRedisClient),
+          sseClients,
+          () => isPostgresConnected,
+        )
 
         const response = await app.inject({
           method: 'GET',
@@ -108,7 +137,12 @@ describe('Heartbeat Agent App', () => {
 
       it('should reflect postgres connection status', async () => {
         isPostgresConnected = false
-        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const app = createApp(
+          asPg(mockPgClient),
+          asRedis(mockRedisClient),
+          sseClients,
+          () => isPostgresConnected,
+        )
 
         const response = await app.inject({
           method: 'GET',
@@ -120,7 +154,12 @@ describe('Heartbeat Agent App', () => {
 
       it('should reflect redis connection status', async () => {
         mockRedisClient.isReady = false
-        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const app = createApp(
+          asPg(mockPgClient),
+          asRedis(mockRedisClient),
+          sseClients,
+          () => isPostgresConnected,
+        )
 
         const response = await app.inject({
           method: 'GET',
@@ -134,7 +173,12 @@ describe('Heartbeat Agent App', () => {
         const mockClient = {} as ServerResponse
         sseClients.add(mockClient)
 
-        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const app = createApp(
+          asPg(mockPgClient),
+          asRedis(mockRedisClient),
+          sseClients,
+          () => isPostgresConnected,
+        )
 
         const response = await app.inject({
           method: 'GET',
@@ -158,7 +202,12 @@ describe('Heartbeat Agent App', () => {
         ]
         mockPgClient.query.mockResolvedValueOnce({ rows: mockHeartbeats })
 
-        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const app = createApp(
+          asPg(mockPgClient),
+          asRedis(mockRedisClient),
+          sseClients,
+          () => isPostgresConnected,
+        )
 
         const response = await app.inject({
           method: 'GET',
@@ -176,7 +225,12 @@ describe('Heartbeat Agent App', () => {
       it('should handle database errors', async () => {
         mockPgClient.query.mockRejectedValueOnce(new Error('Database error'))
 
-        const app = createApp(mockPgClient, mockRedisClient, sseClients, () => isPostgresConnected)
+        const app = createApp(
+          asPg(mockPgClient),
+          asRedis(mockRedisClient),
+          sseClients,
+          () => isPostgresConnected,
+        )
 
         const response = await app.inject({
           method: 'GET',
@@ -198,8 +252,8 @@ describe('Heartbeat Agent App', () => {
       mockPgClient.query.mockResolvedValueOnce(mockResult)
 
       const sendHeartbeat = createHeartbeatFunction(
-        mockPgClient,
-        mockRedisClient,
+        asPg(mockPgClient),
+        asRedis(mockRedisClient),
         sseClients,
         isHeartbeatRunning,
       )
@@ -232,8 +286,8 @@ describe('Heartbeat Agent App', () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
       const sendHeartbeat = createHeartbeatFunction(
-        mockPgClient,
-        mockRedisClient,
+        asPg(mockPgClient),
+        asRedis(mockRedisClient),
         sseClients,
         isHeartbeatRunning,
       )
@@ -251,8 +305,8 @@ describe('Heartbeat Agent App', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
       const sendHeartbeat = createHeartbeatFunction(
-        mockPgClient,
-        mockRedisClient,
+        asPg(mockPgClient),
+        asRedis(mockRedisClient),
         sseClients,
         isHeartbeatRunning,
       )
@@ -276,8 +330,8 @@ describe('Heartbeat Agent App', () => {
       })
 
       const sendHeartbeat = createHeartbeatFunction(
-        mockPgClient,
-        mockRedisClient,
+        asPg(mockPgClient),
+        asRedis(mockRedisClient),
         sseClients,
         isHeartbeatRunning,
       )
@@ -290,7 +344,7 @@ describe('Heartbeat Agent App', () => {
 
   describe('initializeConnections', () => {
     it('should connect to databases and create table', async () => {
-      await initializeConnections(mockPgClient, mockRedisClient)
+      await initializeConnections(asPg(mockPgClient), asRedis(mockRedisClient))
 
       expect(mockPgClient.connect).toHaveBeenCalled()
       expect(mockRedisClient.connect).toHaveBeenCalled()
@@ -300,7 +354,7 @@ describe('Heartbeat Agent App', () => {
     })
 
     it('should create table with correct schema', async () => {
-      await initializeConnections(mockPgClient, mockRedisClient)
+      await initializeConnections(asPg(mockPgClient), asRedis(mockRedisClient))
 
       expect(mockPgClient.query).toHaveBeenCalledWith(
         expect.stringContaining('timestamp TIMESTAMPTZ'),
@@ -308,7 +362,7 @@ describe('Heartbeat Agent App', () => {
     })
 
     it('should create index on timestamp column', async () => {
-      await initializeConnections(mockPgClient, mockRedisClient)
+      await initializeConnections(asPg(mockPgClient), asRedis(mockRedisClient))
 
       expect(mockPgClient.query).toHaveBeenCalledWith(
         expect.stringContaining('CREATE INDEX IF NOT EXISTS idx_heartbeats_timestamp'),
@@ -324,7 +378,7 @@ describe('Heartbeat Agent App', () => {
         rows: [],
       })
 
-      const deletedCount = await cleanupOldHeartbeats(mockPgClient, 30)
+      const deletedCount = await cleanupOldHeartbeats(asPg(mockPgClient), 30)
 
       expect(deletedCount).toBe(100)
       expect(mockPgClient.query).toHaveBeenCalledWith(
@@ -340,7 +394,7 @@ describe('Heartbeat Agent App', () => {
       mockPgClient.query.mockRejectedValueOnce(new Error('Database error'))
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-      const deletedCount = await cleanupOldHeartbeats(mockPgClient, 30)
+      const deletedCount = await cleanupOldHeartbeats(asPg(mockPgClient), 30)
 
       expect(deletedCount).toBe(0)
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -358,7 +412,7 @@ describe('Heartbeat Agent App', () => {
         rows: [],
       })
 
-      await cleanupOldHeartbeats(mockPgClient, 7)
+      await cleanupOldHeartbeats(asPg(mockPgClient), 7)
 
       expect(mockPgClient.query).toHaveBeenCalledWith(
         expect.stringContaining("WHERE timestamp < NOW() - INTERVAL '7 days'"),
@@ -373,7 +427,7 @@ describe('Heartbeat Agent App', () => {
         rows: [],
       })
 
-      await cleanupOldHeartbeats(mockPgClient, 30)
+      await cleanupOldHeartbeats(asPg(mockPgClient), 30)
 
       expect(consoleSpy).toHaveBeenCalledWith('Cleaned up 75 heartbeat records older than 30 days')
 
