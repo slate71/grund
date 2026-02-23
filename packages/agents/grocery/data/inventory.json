@@ -1,0 +1,111 @@
+{
+  "items": [
+    {
+      "id": "whole-milk",
+      "name": "Whole milk",
+      "category": "dairy",
+      "quantity": 0,
+      "unit": "gallon",
+      "expiresAt": null,
+      "reorderAt": 1,
+      "preferredBrand": "Organic Valley",
+      "notes": null,
+      "lastUpdated": "2026-02-23T00:00:00.000Z"
+    },
+    {
+      "id": "eggs",
+      "name": "Eggs",
+      "category": "dairy",
+      "quantity": 3,
+      "unit": "count",
+      "expiresAt": "2026-02-28",
+      "reorderAt": 4,
+      "preferredBrand": null,
+      "notes": "Large, grade A",
+      "lastUpdated": "2026-02-23T00:00:00.000Z"
+    },
+    {
+      "id": "bananas",
+      "name": "Bananas",
+      "category": "produce",
+      "quantity": 2,
+      "unit": "count",
+      "expiresAt": "2026-02-25",
+      "reorderAt": 3,
+      "preferredBrand": null,
+      "notes": null,
+      "lastUpdated": "2026-02-23T00:00:00.000Z"
+    },
+    {
+      "id": "wheat-bread",
+      "name": "Wheat bread",
+      "category": "bakery",
+      "quantity": 1,
+      "unit": "loaf",
+      "expiresAt": "2026-02-26",
+      "reorderAt": 1,
+      "preferredBrand": null,
+      "notes": null,
+      "lastUpdated": "2026-02-23T00:00:00.000Z"
+    },
+    {
+      "id": "butter",
+      "name": "Butter",
+      "category": "dairy",
+      "quantity": 1,
+      "unit": "stick",
+      "expiresAt": "2026-04-15",
+      "reorderAt": 2,
+      "preferredBrand": "Kerrygold",
+      "notes": "Salted",
+      "lastUpdated": "2026-02-23T00:00:00.000Z"
+    },
+    {
+      "id": "chicken-breast",
+      "name": "Chicken breast",
+      "category": "meat",
+      "quantity": 0,
+      "unit": "lb",
+      "expiresAt": null,
+      "reorderAt": 1,
+      "preferredBrand": null,
+      "notes": "Boneless skinless",
+      "lastUpdated": "2026-02-23T00:00:00.000Z"
+    },
+    {
+      "id": "rice",
+      "name": "Jasmine rice",
+      "category": "pantry",
+      "quantity": 3,
+      "unit": "lb",
+      "expiresAt": null,
+      "reorderAt": 2,
+      "preferredBrand": null,
+      "notes": null,
+      "lastUpdated": "2026-02-23T00:00:00.000Z"
+    },
+    {
+      "id": "olive-oil",
+      "name": "Olive oil",
+      "category": "pantry",
+      "quantity": 1,
+      "unit": "bottle",
+      "expiresAt": null,
+      "reorderAt": 1,
+      "preferredBrand": "California Olive Ranch",
+      "notes": "Extra virgin",
+      "lastUpdated": "2026-02-23T00:00:00.000Z"
+    }
+  ],
+  "metadata": {
+    "lastUpdated": "2026-02-23T00:00:00.000Z",
+    "totalItems": 8,
+    "categories": {
+      "dairy": 3,
+      "produce": 1,
+      "bakery": 1,
+      "meat": 1,
+      "pantry": 2
+    }
+  }
+}

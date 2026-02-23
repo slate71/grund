@@ -1,0 +1,2 @@
+# Kroger OAuth tokens — contains secrets
+.kroger-tokens.json
