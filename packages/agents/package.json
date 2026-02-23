@@ -5,10 +5,14 @@
   "type": "module",
   "description": "AI agents for business operations automation",
   "exports": {
-    "./career-ops": "./career-ops/data/index.ts"
+    "./career-ops": "./career-ops/data/index.ts",
+    "./grocery": "./grocery/src/inventory/helpers.ts"
   },
   "scripts": {
     "briefing": "bun career-ops/briefing.ts",
+    "grocery:check": "bun grocery/check.ts",
+    "grocery:order": "bun grocery/order.ts",
+    "grocery:update": "bun grocery/update.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

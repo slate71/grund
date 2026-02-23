@@ -1,0 +1,11 @@
+{
+  "weeklyBudget": 150,
+  "preferredStore": null,
+  "dietaryRestrictions": [],
+  "preferredBrands": {
+    "dairy": "Organic Valley",
+    "butter": "Kerrygold"
+  },
+  "deliveryDay": null,
+  "maxOrdersPerWeek": 2
+}
