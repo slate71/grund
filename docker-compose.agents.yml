@@ -25,6 +25,36 @@ services:
       timeout: 10s
       retries: 3
 
+  coparent-agent:
+    build: ./packages/agents/coparent
+    container_name: grund-coparent
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://grund:grund_db_2024@postgres:5432/grund
+      PORT: 3002
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      PARENT_1_PHONE: ${PARENT_1_PHONE}
+      PARENT_2_PHONE: ${PARENT_2_PHONE}
+      GOOGLE_CALENDAR_CREDENTIALS: ${GOOGLE_CALENDAR_CREDENTIALS}
+      PARENT_1_CALENDAR_ID: ${PARENT_1_CALENDAR_ID}
+      PARENT_2_CALENDAR_ID: ${PARENT_2_CALENDAR_ID}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    ports:
+      - '3002:3002'
+    networks:
+      - grund-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3002/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Future agents will go here
   # briefing-agent:
   #   build: ./packages/agents/career-ops
