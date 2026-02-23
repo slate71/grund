@@ -1,99 +1,96 @@
-import type { DeliveryService, Product, StoreLocation, SearchOptions } from './types.js'
+import type {
+  DeliveryService,
+  Product,
+  StoreLocation,
+  SearchOptions,
+  ShoppableItem,
+  ShoppableList,
+} from './types.js'
 
 // Mock delivery service for testing and development without API credentials
 
 const MOCK_PRODUCTS: Product[] = [
   {
     productId: 'mock-001',
-    upc: '0001111041700',
-    name: 'Kroger Vitamin D Whole Milk',
-    description: 'Kroger Vitamin D Whole Milk',
-    brand: 'Kroger',
+    name: 'Organic Whole Milk',
+    description: 'Organic Whole Milk',
+    brand: 'Organic Valley',
     category: 'Dairy',
     size: '1 gal',
-    price: { regular: 3.99, promo: null },
-    images: [],
+    price: { regular: 6.49, promo: null },
+    imageUrl: null,
     inStock: true,
   },
   {
     productId: 'mock-002',
-    upc: '0001111060903',
-    name: 'Kroger Grade A Large Eggs',
-    description: 'Kroger Grade A Large Eggs',
-    brand: 'Kroger',
+    name: 'Large Brown Eggs',
+    description: 'Large Brown Eggs, Cage Free',
+    brand: 'Vital Farms',
     category: 'Dairy',
     size: '12 ct',
-    price: { regular: 4.29, promo: 3.49 },
-    images: [],
+    price: { regular: 5.99, promo: 4.99 },
+    imageUrl: null,
     inStock: true,
   },
   {
     productId: 'mock-003',
-    upc: '0000000004011',
     name: 'Banana',
     description: 'Fresh Banana',
     brand: '',
     category: 'Produce',
     size: '1 each',
     price: { regular: 0.25, promo: null },
-    images: [],
+    imageUrl: null,
     inStock: true,
   },
   {
     productId: 'mock-004',
-    upc: '0001111087373',
-    name: 'Kroger Wheat Bread',
-    description: 'Kroger Soft Wheat Bread',
-    brand: 'Kroger',
+    name: 'Whole Wheat Bread',
+    description: 'Whole Wheat Sliced Bread',
+    brand: 'Dave\'s Killer Bread',
     category: 'Bakery',
-    size: '20 oz',
-    price: { regular: 2.49, promo: null },
-    images: [],
+    size: '27 oz',
+    price: { regular: 5.49, promo: null },
+    imageUrl: null,
     inStock: true,
   },
   {
     productId: 'mock-005',
-    upc: '0001111050905',
-    name: 'Kroger Butter',
-    description: 'Kroger Salted Butter Sticks',
-    brand: 'Kroger',
+    name: 'Kerrygold Pure Irish Butter',
+    description: 'Kerrygold Pure Irish Butter, Salted',
+    brand: 'Kerrygold',
     category: 'Dairy',
-    size: '16 oz',
+    size: '8 oz',
     price: { regular: 4.99, promo: 3.99 },
-    images: [],
+    imageUrl: null,
     inStock: true,
   },
   {
     productId: 'mock-006',
-    upc: '0000000094011',
     name: 'Green Onions',
     description: 'Green Onions Bunch',
     brand: '',
     category: 'Produce',
     size: '1 bunch',
     price: { regular: 0.99, promo: null },
-    images: [],
+    imageUrl: null,
     inStock: false,
   },
 ]
 
 const MOCK_LOCATION: StoreLocation = {
-  locationId: '70300015',
-  name: 'Kroger - Downtown',
-  chain: 'Kroger',
+  locationId: 'safeway-broadway',
+  name: 'Safeway',
+  chain: 'Safeway',
   address: {
-    street: '123 Main St',
-    city: 'San Francisco',
+    street: '224 Broadway',
+    city: 'Oakland',
     state: 'CA',
-    zipCode: '94105',
+    zipCode: '94607',
   },
-  phone: '(415) 555-0100',
-  departments: ['Bakery', 'Deli', 'Produce', 'Dairy', 'Meat', 'Seafood', 'Frozen'],
 }
 
 export function createMockService(): DeliveryService {
-  const cart: { upc: string; quantity: number }[] = []
-
   return {
     provider: 'mock',
 
@@ -111,8 +108,21 @@ export function createMockService(): DeliveryService {
       return MOCK_PRODUCTS.find((p) => p.productId === productId) ?? null
     },
 
-    async addToCart(upc: string, quantity: number): Promise<void> {
-      cart.push({ upc, quantity })
+    async createShoppableList(items: ShoppableItem[]): Promise<ShoppableList> {
+      return {
+        listId: `mock-list-${Date.now()}`,
+        checkoutUrl: 'https://www.instacart.com/store/mock-checkout',
+        matchedItems: items.map((item) => {
+          const match = MOCK_PRODUCTS.find(
+            (p) => p.name.toLowerCase().includes(item.name.toLowerCase()),
+          )
+          return {
+            name: item.name,
+            matched: !!match,
+            productName: match?.name,
+          }
+        }),
+      }
     },
 
     async searchLocations(_zipCode: string, _radiusMiles?: number): Promise<StoreLocation[]> {

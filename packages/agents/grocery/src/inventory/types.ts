@@ -37,8 +37,7 @@ export interface InventoryData {
 export interface ProductMapping {
   itemId: string // references GroceryItem.id
   itemName: string
-  kroger: {
-    upc: string
+  product: {
     productId: string
     name: string
     size: string

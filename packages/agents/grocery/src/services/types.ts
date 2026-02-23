@@ -1,16 +1,15 @@
 // Delivery service abstraction — provider-agnostic interface
-// Implementations: Kroger (v1), extensible to others
+// Implementations: Instacart IDP, Mock (dev/test)
 
 export interface Product {
   productId: string
-  upc: string
   name: string
   description: string
   brand: string
   category: string
   size: string
   price: Price | null
-  images: ProductImage[]
+  imageUrl: string | null
   inStock: boolean
 }
 
@@ -19,21 +18,17 @@ export interface Price {
   promo: number | null
 }
 
-export interface ProductImage {
-  url: string
-  size: 'small' | 'medium' | 'large' | 'xlarge'
-}
-
-export interface CartItem {
-  productId: string
-  upc: string
+export interface ShoppableItem {
   name: string
   quantity: number
+  unit?: string
+  productId?: string // Provider product ID from a previous search
 }
 
-export interface Cart {
-  items: CartItem[]
-  estimatedTotal: number
+export interface ShoppableList {
+  listId: string
+  checkoutUrl: string
+  matchedItems: { name: string; matched: boolean; productName?: string }[]
 }
 
 export interface StoreLocation {
@@ -46,12 +41,10 @@ export interface StoreLocation {
     state: string
     zipCode: string
   }
-  phone: string
-  departments: string[]
 }
 
 export interface SearchOptions {
-  locationId?: string
+  postalCode?: string
   limit?: number
 }
 
@@ -64,17 +57,10 @@ export interface DeliveryService {
   // Get a specific product by ID
   getProduct(productId: string): Promise<Product | null>
 
-  // Add item to cart (requires user auth)
-  addToCart(upc: string, quantity: number): Promise<void>
+  // Build a shoppable list and return a checkout URL
+  // For Instacart: generates a link to an Instacart landing page where the user completes checkout
+  createShoppableList(items: ShoppableItem[]): Promise<ShoppableList>
 
-  // Find nearby store locations
+  // Find nearby retailers / store locations
   searchLocations(zipCode: string, radiusMiles?: number): Promise<StoreLocation[]>
-}
-
-// Auth tokens for OAuth2 flows
-export interface AuthTokens {
-  accessToken: string
-  refreshToken: string | null
-  expiresAt: number // unix timestamp
-  scope: string
 }

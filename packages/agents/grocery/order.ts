@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 
 // Order orchestrator — the main delivery agent script
-// Reads inventory → identifies needs → uses Claude to plan → searches products → builds cart
+// Reads inventory → identifies needs → uses Claude to plan → searches products → builds shoppable list
 //
 // Usage:
-//   bun order.ts              # Plan and build cart (requires confirmation)
-//   bun order.ts --dry-run    # Plan only, don't add to cart
+//   bun order.ts              # Plan and build shoppable list (requires confirmation)
+//   bun order.ts --dry-run    # Plan only, don't create list
 //   bun order.ts --mock       # Use mock delivery service (no API keys needed)
 
 import {
@@ -20,7 +20,7 @@ import {
   getProductMapping,
 } from './src/inventory/helpers.js'
 import { planOrder, selectProduct, reviewCart } from './src/agent/planner.js'
-import type { DeliveryService } from './src/services/types.js'
+import type { DeliveryService, ShoppableItem } from './src/services/types.js'
 import type { ProductSelection } from './src/agent/planner.js'
 import type { OrderRecord, OrderItem } from './src/inventory/types.js'
 import { createInterface } from 'readline'
@@ -40,8 +40,8 @@ async function getService(useMock: boolean): Promise<DeliveryService> {
     const { createMockService } = await import('./src/services/mock.js')
     return createMockService()
   }
-  const { createKrogerService } = await import('./src/services/kroger.js')
-  return createKrogerService()
+  const { createInstacartService } = await import('./src/services/instacart.js')
+  return createInstacartService()
 }
 
 async function main(): Promise<void> {
@@ -51,7 +51,7 @@ async function main(): Promise<void> {
   console.log('\n  GROCERY ORDER AGENT')
   console.log('─'.repeat(50))
 
-  if (dryRun) console.log('  Mode: DRY RUN (no cart changes)')
+  if (dryRun) console.log('  Mode: DRY RUN (no list changes)')
   if (useMock) console.log('  Mode: MOCK SERVICE (no real API calls)')
 
   // 1. Load state
@@ -98,15 +98,15 @@ async function main(): Promise<void> {
     const mapping = getProductMapping(productMap, item.itemId)
     let searchTerm = item.searchTerm
 
-    if (mapping?.kroger) {
+    if (mapping?.product) {
       // We have a known product — try to get it directly
-      const product = await service.getProduct(mapping.kroger.productId)
+      const product = await service.getProduct(mapping.product.productId)
       if (product && product.inStock) {
         selections.push({
           itemId: item.itemId,
           selectedProduct: product,
           quantity: item.quantity,
-          reason: `Mapped product: ${mapping.kroger.name}`,
+          reason: `Mapped product: ${mapping.product.name}`,
         })
         console.log(`    [mapped] ${item.name} -> ${product.name}`)
         continue
@@ -116,9 +116,8 @@ async function main(): Promise<void> {
     }
 
     // Search for candidates
-    const locationId = preferences.preferredStore?.locationId
     const candidates = await service.searchProducts(searchTerm, {
-      locationId,
+      postalCode: process.env.INSTACART_POSTAL_CODE || '94607',
       limit: 5,
     })
 
@@ -140,8 +139,7 @@ async function main(): Promise<void> {
       const newMapping = {
         itemId: item.itemId,
         itemName: item.name,
-        kroger: {
-          upc: selection.selectedProduct.upc,
+        product: {
           productId: selection.selectedProduct.productId,
           name: selection.selectedProduct.name,
           size: selection.selectedProduct.size,
@@ -187,52 +185,64 @@ async function main(): Promise<void> {
   }
 
   // 5. Confirm with user
-  const proceed = await confirm('\n  Add these items to your Kroger cart?')
+  const proceed = await confirm('\n  Create Instacart shoppable list with these items?')
   if (!proceed) {
     console.log('  Cancelled.')
     saveProductMap(productMap)
     return
   }
 
-  // 6. Add to cart
-  console.log('\n  Adding items to cart...')
-  const orderItems: OrderItem[] = []
+  // 6. Create shoppable list (single API call with all items)
+  console.log('\n  Creating shoppable list on Instacart...')
+  const shoppableItems: ShoppableItem[] = selections.map((s) => ({
+    name: s.selectedProduct.name,
+    quantity: s.quantity,
+    unit: s.selectedProduct.size,
+    productId: s.selectedProduct.productId,
+  }))
 
-  for (const selection of selections) {
-    try {
-      await service.addToCart(selection.selectedProduct.upc, selection.quantity)
-      console.log(`    [added] ${selection.selectedProduct.name} x${selection.quantity}`)
-      orderItems.push({
-        itemId: selection.itemId,
-        name: selection.selectedProduct.name,
-        quantity: selection.quantity,
-        unit: selection.selectedProduct.size,
-        upc: selection.selectedProduct.upc,
-        price: selection.selectedProduct.price?.promo ?? selection.selectedProduct.price?.regular ?? null,
-      })
-    } catch (err) {
-      console.error(`    [failed] ${selection.selectedProduct.name}: ${err instanceof Error ? err.message : err}`)
+  try {
+    const shoppableList = await service.createShoppableList(shoppableItems)
+
+    console.log(`\n  Shoppable list created: ${shoppableList.listId}`)
+    for (const m of shoppableList.matchedItems) {
+      const status = m.matched ? 'matched' : 'unmatched'
+      console.log(`    [${status}] ${m.name}${m.productName ? ` -> ${m.productName}` : ''}`)
     }
-  }
 
-  // 7. Record the order
-  const orders = loadOrders()
-  const order: OrderRecord = {
-    id: `order-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-    items: orderItems,
-    estimatedTotal: review.totalEstimate,
-    store: preferences.preferredStore?.name ?? null,
-    status: 'cart-built',
-    notes: review.summary,
-  }
-  orders.orders.push(order)
-  saveOrders(orders)
-  saveProductMap(productMap)
+    // 7. Record the order
+    const orderItems: OrderItem[] = selections.map((s) => ({
+      itemId: s.itemId,
+      name: s.selectedProduct.name,
+      quantity: s.quantity,
+      unit: s.selectedProduct.size,
+      upc: null,
+      price: s.selectedProduct.price?.promo ?? s.selectedProduct.price?.regular ?? null,
+    }))
 
-  console.log(`\n  Cart built. Order ${order.id} saved.`)
-  console.log('  Complete checkout in the Kroger app or at kroger.com')
-  console.log('─'.repeat(50) + '\n')
+    const orders = loadOrders()
+    const order: OrderRecord = {
+      id: `order-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      items: orderItems,
+      estimatedTotal: review.totalEstimate,
+      store: 'Instacart',
+      status: 'cart-built',
+      notes: `${review.summary} | Checkout: ${shoppableList.checkoutUrl}`,
+    }
+    orders.orders.push(order)
+    saveOrders(orders)
+    saveProductMap(productMap)
+
+    console.log(`\n  Order ${order.id} saved.`)
+    console.log(`\n  Open this link to complete checkout on Instacart:`)
+    console.log(`  ${shoppableList.checkoutUrl}`)
+    console.log('─'.repeat(50) + '\n')
+  } catch (err) {
+    console.error(`\n  Failed to create shoppable list: ${err instanceof Error ? err.message : err}`)
+    saveProductMap(productMap) // Still save learned product mappings
+    process.exit(1)
+  }
 }
 
 main().catch((err) => {

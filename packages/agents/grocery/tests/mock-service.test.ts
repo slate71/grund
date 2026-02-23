@@ -25,7 +25,7 @@ describe('mock delivery service', () => {
     const service = createMockService()
     const product = await service.getProduct('mock-001')
     expect(product).not.toBeNull()
-    expect(product!.upc).toBe('0001111041700')
+    expect(product!.productId).toBe('mock-001')
   })
 
   it('returns null for unknown product id', async () => {
@@ -34,14 +34,24 @@ describe('mock delivery service', () => {
     expect(product).toBeNull()
   })
 
-  it('adds to cart without error', async () => {
+  it('creates a shoppable list with matched items', async () => {
     const service = createMockService()
-    await expect(service.addToCart('0001111041700', 1)).resolves.not.toThrow()
+    const list = await service.createShoppableList([
+      { name: 'milk', quantity: 1 },
+      { name: 'banana', quantity: 6 },
+      { name: 'xyznonexistent', quantity: 1 },
+    ])
+    expect(list.listId).toBeTruthy()
+    expect(list.checkoutUrl).toBeTruthy()
+    expect(list.matchedItems).toHaveLength(3)
+    expect(list.matchedItems[0].matched).toBe(true)
+    expect(list.matchedItems[1].matched).toBe(true)
+    expect(list.matchedItems[2].matched).toBe(false)
   })
 
   it('searches locations', async () => {
     const service = createMockService()
-    const locations = await service.searchLocations('94105')
+    const locations = await service.searchLocations('94607')
     expect(locations.length).toBeGreaterThan(0)
     expect(locations[0].locationId).toBeTruthy()
   })

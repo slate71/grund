@@ -1,2 +1,3 @@
-# Kroger OAuth tokens — contains secrets
-.kroger-tokens.json
+# API credentials and tokens
+.env
+.env.local
