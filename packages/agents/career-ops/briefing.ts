@@ -87,18 +87,19 @@ function parseContext(config: BriefingConfig = DEFAULT_CONFIG): Context {
     const [, frontmatterText, body] = match
 
     // Parse YAML using js-yaml
-    const parsedYaml = yaml.load(frontmatterText) as any
+    const parsedYaml = yaml.load(frontmatterText) as Record<string, unknown> | undefined
 
     // Validate and provide defaults for missing fields
+    const streak = parsedYaml?.current_streak as Record<string, unknown> | undefined
     const frontmatter: ContextFrontmatter = {
-      runway_days: parsedYaml?.runway_days ?? 0,
-      monthly_burn: parsedYaml?.monthly_burn ?? 0,
-      pipeline_count: parsedYaml?.pipeline_count ?? 0,
+      runway_days: (parsedYaml?.runway_days as number) ?? 0,
+      monthly_burn: (parsedYaml?.monthly_burn as number) ?? 0,
+      pipeline_count: (parsedYaml?.pipeline_count as number) ?? 0,
       current_streak: {
-        commits: parsedYaml?.current_streak?.commits ?? 0,
-        outreach: parsedYaml?.current_streak?.outreach ?? 0,
+        commits: (streak?.commits as number) ?? 0,
+        outreach: (streak?.outreach as number) ?? 0,
       },
-      last_updated: parsedYaml?.last_updated || new Date().toISOString().split('T')[0],
+      last_updated: (parsedYaml?.last_updated as string) || new Date().toISOString().split('T')[0],
     }
 
     // Validate types

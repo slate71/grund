@@ -8,6 +8,7 @@ import {
   createHeartbeatFunction,
   initializeConnections,
   cleanupOldHeartbeats,
+  type RedisClient,
 } from './app'
 
 const PORT = parseInt(process.env.PORT || '3001', 10)
@@ -23,7 +24,7 @@ const pgClient = new Client({
 // Redis connection
 const redisClient = createClient({
   url: process.env.REDIS_URL,
-})
+}) as unknown as RedisClient
 
 // Store for SSE clients
 const sseClients = new Set<ServerResponse>()
@@ -47,7 +48,7 @@ async function init() {
 }
 
 // Setup PostgreSQL event listeners
-pgClient.on('error', (err) => {
+pgClient.on('error', (err: Error) => {
   console.error('PostgreSQL client error:', err)
   isPostgresConnected = false
 })

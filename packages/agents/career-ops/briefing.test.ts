@@ -320,7 +320,7 @@ describe('Briefing Engine', () => {
 
     beforeEach(() => {
       consoleOutput = []
-      console.log = (...args: any[]) => {
+      console.log = (...args: unknown[]) => {
         consoleOutput.push(args.map((arg) => String(arg)).join(' '))
       }
     })

@@ -3,6 +3,13 @@ import type { FastifyInstance } from 'fastify'
 import type { ServerResponse } from 'node:http'
 import { Client } from 'pg'
 
+export interface RedisClient {
+  connect(): Promise<unknown>
+  publish(channel: string, message: string): Promise<number>
+  isReady: boolean
+  on(event: string, listener: (...args: unknown[]) => void): void
+}
+
 // Validate required environment variables
 export function validateEnvironment() {
   if (!process.env.DATABASE_URL) {
@@ -19,7 +26,7 @@ export function validateEnvironment() {
 // Create Fastify app
 export function createApp(
   pgClient: Client,
-  redisClient: any,
+  redisClient: RedisClient,
   sseClients: Set<ServerResponse>,
   isPostgresConnected: () => boolean,
 ): FastifyInstance {
@@ -79,7 +86,7 @@ export function createApp(
 // Create heartbeat function
 export function createHeartbeatFunction(
   pgClient: Client,
-  redisClient: any,
+  redisClient: RedisClient,
   sseClients: Set<ServerResponse>,
   isHeartbeatRunning: { value: boolean },
 ) {
@@ -138,7 +145,7 @@ export function createHeartbeatFunction(
 }
 
 // Initialize database connections
-export async function initializeConnections(pgClient: Client, redisClient: any) {
+export async function initializeConnections(pgClient: Client, redisClient: RedisClient) {
   await pgClient.connect()
   await redisClient.connect()
   console.log('Connected to PostgreSQL and Redis')
