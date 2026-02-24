@@ -56,3 +56,7 @@ cspell.json
 
 # Prompts directory
 /prompts/
+
+# TypeScript build artifacts in src directories
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
