@@ -32,8 +32,6 @@ grund/
 │   ├── db/                 # Database schemas and migrations
 │   ├── shared/             # Shared types and utilities
 │   └── react-hooks/        # Reusable React patterns
-└── clients/                # Consulting workspaces (gitignored)
-    └── _template/          # Template for new clients
 ```
 
 ## Prerequisites
@@ -89,12 +87,6 @@ bun db:studio        # Open Drizzle Studio for database
 - **network.json** - Contact relationship management
 - TypeScript types and helper functions
 - 100% test coverage on data operations
-
-### Client Management (`clients/`)
-- Private workspaces for consulting engagements
-- Template structure for consistent organization
-- All client data gitignored for privacy
-- See `clients/README.md` for usage
 
 ## Contributing
 
