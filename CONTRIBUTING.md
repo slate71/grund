@@ -68,10 +68,6 @@ Types:
 - Must include: `CONTEXT.md`, data schemas, TypeScript types
 - Add tests for data helpers and utilities
 
-### Client Work
-- Templates and tooling go in the codebase
-- Actual client data stays in gitignored `/clients/` directory
-- Never commit real client information
 
 ### Testing
 - Run tests before creating PR: `bun test`
@@ -93,4 +89,3 @@ grund/
 │   ├── api/        # Backend API
 │   ├── db/         # Database schemas
 │   └── shared/     # Shared types and utilities
-└── clients/        # Client workspaces (gitignored)
