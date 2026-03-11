@@ -26,6 +26,9 @@ const gmail = new GmailClient(proxyUrl)
 const newsletterConfig = loadNewsletterConfig()
 
 async function handleNewMessage(email: ParsedEmail): Promise<void> {
+  // Skip drafts and sent messages
+  if (email.labels.includes('DRAFT') || email.labels.includes('SENT')) return
+
   // Skip already-processed messages
   if (await isAlreadyProcessed(pgClient, email.messageId)) return
 
