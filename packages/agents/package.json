@@ -4,11 +4,8 @@
   "private": true,
   "type": "module",
   "description": "AI agents for business operations automation",
-  "exports": {
-    "./career-ops": "./career-ops/data/index.ts"
-  },
+  "exports": {},
   "scripts": {
-    "briefing": "bun career-ops/briefing.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

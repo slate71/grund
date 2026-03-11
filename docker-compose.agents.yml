@@ -25,12 +25,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Future agents will go here
-  # briefing-agent:
-  #   build: ./packages/agents/career-ops
-  #   container_name: grund-briefing
-  #   ...
-
 networks:
   grund-network:
     external: false
