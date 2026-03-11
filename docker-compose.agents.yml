@@ -32,7 +32,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       PORT: 9876
     volumes:
-      - ~/.config/grund:/config:ro
+      - ~/.config/grund:/config
     ports:
       - '9876:9876'
     networks:
