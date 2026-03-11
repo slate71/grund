@@ -27,10 +27,16 @@ const newsletterConfig = loadNewsletterConfig()
 
 async function handleNewMessage(email: ParsedEmail): Promise<void> {
   // Skip drafts and sent messages
-  if (email.labels.includes('DRAFT') || email.labels.includes('SENT')) return
+  if (email.labels.includes('DRAFT') || email.labels.includes('SENT')) {
+    console.log(`Skipping ${email.messageId} (labels: ${email.labels.join(', ')})`)
+    return
+  }
 
   // Skip already-processed messages
-  if (await isAlreadyProcessed(pgClient, email.messageId)) return
+  if (await isAlreadyProcessed(pgClient, email.messageId)) {
+    console.log(`Skipping ${email.messageId} (already processed)`)
+    return
+  }
 
   console.log(`Triaging: "${email.subject}" from ${email.from}`)
 
