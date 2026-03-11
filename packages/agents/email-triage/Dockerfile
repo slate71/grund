@@ -4,10 +4,10 @@ RUN apk add --no-cache curl
 
 WORKDIR /app
 
-COPY package.json bun.lock ./
+COPY package.json ./
 COPY tsconfig.json ./
 
-RUN bun install --frozen-lockfile
+RUN bun install
 
 COPY src ./src
 
