@@ -31,13 +31,11 @@ export function registerRoutes(app: FastifyInstance) {
       body: request.method !== 'GET' ? JSON.stringify(request.body) : undefined,
     })
 
-    reply.code(res.status)
-    for (const [key, value] of res.headers.entries()) {
-      if (key.toLowerCase() !== 'transfer-encoding') {
-        reply.header(key, value)
-      }
-    }
     const body = await res.text()
+    console.log(`Anthropic proxy: ${request.method} ${path} → ${res.status}`)
+
+    reply.code(res.status)
+    reply.header('content-type', 'application/json')
     return reply.send(body)
   })
 
@@ -78,13 +76,11 @@ export function registerRoutes(app: FastifyInstance) {
       body: request.method !== 'GET' ? JSON.stringify(request.body) : undefined,
     })
 
-    reply.code(res.status)
-    for (const [key, value] of res.headers.entries()) {
-      if (key.toLowerCase() !== 'transfer-encoding') {
-        reply.header(key, value)
-      }
-    }
     const body = await res.text()
+    console.log(`Gmail proxy: ${request.method} ${url.pathname} → ${res.status}`)
+
+    reply.code(res.status)
+    reply.header('content-type', 'application/json')
     return reply.send(body)
   })
 
