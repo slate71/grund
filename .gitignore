@@ -60,3 +60,6 @@ cspell.json
 # TypeScript build artifacts in src directories
 packages/*/src/**/*.js
 packages/*/src/**/*.js.map
+
+# Claude Code
+.claude/

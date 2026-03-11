@@ -1,0 +1,20 @@
+{
+  "name": "@grund/credential-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Credential proxy — injects OAuth/API tokens for agent containers",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "setup": "bun run src/setup-oauth.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
