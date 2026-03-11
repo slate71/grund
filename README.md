@@ -7,8 +7,6 @@ A monorepo for developing autonomous agents that handle real-world workflows. St
 ## What's Here
 
 ### Built and Working
-- **Career Ops Agent** - Manages my job search pipeline, network relationships, and daily actions
-- **Client Management System** - Template-based workspace for consulting engagements
 - **AI Interaction Classifier** - Evaluates conversation outcomes for support automation
 
 ### Architecture
@@ -27,7 +25,6 @@ grund/
 │   └── hooks-demo/         # React hooks demonstration
 ├── packages/
 │   ├── agents/             # Autonomous agent definitions
-│   │   └── career-ops/     # Job search automation agent
 │   ├── api/                # Backend API with modular routes
 │   ├── db/                 # Database schemas and migrations
 │   ├── shared/             # Shared types and utilities
@@ -60,13 +57,6 @@ grund/
    bun dev
    ```
 
-4. **Explore the Career Ops Agent:**
-   ```bash
-   cd packages/agents/career-ops
-   cat CONTEXT.md  # See agent positioning
-   cat data/pipeline.json  # See opportunity tracking
-   ```
-
 ## Available Scripts
 
 ```bash
@@ -78,15 +68,6 @@ bun typecheck        # Type check all packages
 bun db:push          # Push database schema changes
 bun db:studio        # Open Drizzle Studio for database
 ```
-
-## Key Features
-
-### Career Ops Agent (`packages/agents/career-ops/`)
-- **CONTEXT.md** - Agent's persistent memory and positioning
-- **pipeline.json** - Job opportunity tracking with stages
-- **network.json** - Contact relationship management
-- TypeScript types and helper functions
-- 100% test coverage on data operations
 
 ## Contributing
 
