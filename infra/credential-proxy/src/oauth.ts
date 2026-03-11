@@ -2,7 +2,9 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { homedir } from 'node:os'
 
-const CONFIG_DIR = resolve(homedir(), '.config/grund')
+const DOCKER_CONFIG_DIR = '/config'
+const LOCAL_CONFIG_DIR = resolve(homedir(), '.config/grund')
+const CONFIG_DIR = existsSync(DOCKER_CONFIG_DIR) ? DOCKER_CONFIG_DIR : LOCAL_CONFIG_DIR
 const TOKENS_PATH = resolve(CONFIG_DIR, 'gmail-tokens.json')
 
 export interface GmailTokens {
