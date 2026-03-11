@@ -4,7 +4,7 @@ This is the "everything as code" monorepo for a portfolio operator. One repo run
 
 **Owner:** Lukas Andersen — Staff Frontend Engineer building toward $10M in assets by age 56.
 
-**Current state:** Scaffolding. First feature will be a Daily Operations Brief agent.
+**Current state:** Scaffolding.
 
 **Planned structure:**
 
@@ -14,7 +14,6 @@ grund/
 ├── packages/ops-ui/        # UI components (tool-invocation, agent-status)
 ├── packages/agents/        # Agent definitions
 ├── packages/core/          # Shared types, MCP utils
-├── career/                 # Job pipeline, prep, resume
 ├── marketing/              # Blog, portfolio site
 ├── docs/                   # Internal docs
 └── finances/               # Budgets, Attain integration
