@@ -53,7 +53,7 @@ export function registerRoutes(app: FastifyInstance) {
 
     const accessToken = await getValidAccessToken(tokens)
     const path = (request.params as { '*': string })['*']
-    const url = new URL(`https://gmail.googleapis.com/${path}`)
+    const url = new URL(`https://gmail.googleapis.com/gmail/${path}`)
 
     // Forward query params
     const rawUrl = request.url
