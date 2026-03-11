@@ -26,9 +26,13 @@ const gmail = new GmailClient(proxyUrl)
 const newsletterConfig = loadNewsletterConfig()
 
 async function handleNewMessage(email: ParsedEmail): Promise<void> {
-  // Skip drafts and sent messages
-  if (email.labels.includes('DRAFT') || email.labels.includes('SENT')) {
-    console.log(`Skipping ${email.messageId} (labels: ${email.labels.join(', ')})`)
+  // Skip drafts and outbound-only sent messages (not self-sends)
+  if (email.labels.includes('DRAFT')) {
+    console.log(`Skipping ${email.messageId} (draft)`)
+    return
+  }
+  if (email.labels.includes('SENT') && !email.labels.includes('INBOX')) {
+    console.log(`Skipping ${email.messageId} (sent, not inbox)`)
     return
   }
 
