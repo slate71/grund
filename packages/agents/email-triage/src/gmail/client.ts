@@ -104,13 +104,21 @@ export function parseMessage(msg: GmailMessage): ParsedEmail {
   const getHeader = (name: string) =>
     msg.payload.headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? ''
 
+  const subject = getHeader('subject')
+  const body = extractBody(msg.payload)
+
+  if (!subject && !body) {
+    console.warn(`Empty subject+body for ${msg.id}, headers:`, msg.payload.headers.map((h) => h.name))
+    console.warn(`  mimeType: ${msg.payload.mimeType}, parts: ${msg.payload.parts?.length ?? 0}`)
+  }
+
   return {
     messageId: msg.id,
     threadId: msg.threadId,
     from: getHeader('from'),
     to: getHeader('to'),
-    subject: getHeader('subject'),
-    body: extractBody(msg.payload),
+    subject,
+    body,
     labels: msg.labelIds ?? [],
     date: getHeader('date') || new Date(parseInt(msg.internalDate)).toISOString(),
   }
