@@ -1,0 +1,12 @@
+valued:
+  domains:
+    - stratechery.com
+    - denseanalysis.com
+    - notboring.co
+    - every.to
+  senders:
+    - dan@tldrnewsletter.com
+    - noreply@substack.com
+  patterns:
+    - "^\\[TLDR\\]"
+    - "Weekly Digest"

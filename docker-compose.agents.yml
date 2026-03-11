@@ -25,6 +25,54 @@ services:
       timeout: 10s
       retries: 3
 
+  credential-proxy:
+    build: ./infra/credential-proxy
+    container_name: grund-credential-proxy
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      PORT: 9876
+    volumes:
+      - ~/.config/grund:/config:ro
+    ports:
+      - '9876:9876'
+    networks:
+      - grund-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9876/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  email-triage-agent:
+    build: ./packages/agents/email-triage
+    container_name: grund-email-triage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      credential-proxy:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://grund:grund_db_2024@postgres:5432/grund
+      REDIS_URL: redis://redis:6379
+      CREDENTIAL_PROXY_URL: http://credential-proxy:9876
+      ANTHROPIC_BASE_URL: http://credential-proxy:9876/anthropic
+      ANTHROPIC_API_KEY: placeholder
+      PORT: 3002
+    ports:
+      - '3002:3002'
+    networks:
+      - grund-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3002/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   grund-network:
     external: false
