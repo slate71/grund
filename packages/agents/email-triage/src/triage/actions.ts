@@ -1,6 +1,7 @@
 import type { GmailClient } from '../gmail/client'
 import type { ParsedEmail } from '../gmail/types'
 import type { TriageDecision } from './types'
+import { CATEGORY_ACTIONS } from './types'
 import { generateDraftReply } from './classifier'
 
 // Cache label name → ID mappings
@@ -21,9 +22,10 @@ export async function executeActions(
   let archived = false
   let draftCreated = false
 
-  // Apply labels
+  // Use predefined labels from CATEGORY_ACTIONS, ignore classifier suggestions
+  const actions = CATEGORY_ACTIONS[decision.category]
   const labelIds: string[] = []
-  for (const labelName of decision.suggestedLabels) {
+  for (const labelName of actions.labels) {
     try {
       let labelId = labelCache.get(labelName)
       if (!labelId) {
@@ -39,7 +41,7 @@ export async function executeActions(
 
   // Archive = remove INBOX label
   const removeLabelIds: string[] = []
-  if (decision.archiveAfter) {
+  if (actions.archive) {
     removeLabelIds.push('INBOX')
     archived = true
   }
@@ -49,7 +51,7 @@ export async function executeActions(
   }
 
   // Draft reply
-  if (decision.shouldDraftReply) {
+  if (actions.draft) {
     try {
       const replyBody = await generateDraftReply(email, {
         anthropicBaseUrl: ctx.anthropicBaseUrl,
