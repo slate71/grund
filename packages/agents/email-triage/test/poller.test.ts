@@ -19,6 +19,7 @@ function createMockRedis(): RedisClient {
 
 function createMockGmail(): GmailClient {
   return {
+    account: 'test',
     getProfile: vi.fn().mockResolvedValue({ emailAddress: 'test@test.com', historyId: '1000' }),
     listHistory: vi.fn().mockResolvedValue({ historyId: '1001', history: [] }),
     getMessage: vi.fn().mockResolvedValue({
@@ -59,11 +60,11 @@ describe('GmailPoller', () => {
     poller.stop()
 
     expect(gmail.getProfile).toHaveBeenCalled()
-    expect(redis.set).toHaveBeenCalledWith('email-triage:historyId', '1000')
+    expect(redis.set).toHaveBeenCalledWith('email-triage:test:historyId', '1000')
   })
 
   it('skips profile fetch if historyId already in Redis', async () => {
-    await redis.set('email-triage:historyId', '999')
+    await redis.set('email-triage:test:historyId', '999')
 
     const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000 })
     await poller.start()
@@ -73,7 +74,7 @@ describe('GmailPoller', () => {
   })
 
   it('calls onNewMessage for each new message in history', async () => {
-    await redis.set('email-triage:historyId', '999')
+    await redis.set('email-triage:test:historyId', '999')
     ;(gmail.listHistory as ReturnType<typeof vi.fn>).mockResolvedValue({
       historyId: '1001',
       history: [
@@ -91,7 +92,7 @@ describe('GmailPoller', () => {
   })
 
   it('deduplicates message IDs across history entries', async () => {
-    await redis.set('email-triage:historyId', '999')
+    await redis.set('email-triage:test:historyId', '999')
     ;(gmail.listHistory as ReturnType<typeof vi.fn>).mockResolvedValue({
       historyId: '1001',
       history: [
@@ -109,7 +110,7 @@ describe('GmailPoller', () => {
   })
 
   it('updates historyId in Redis after poll', async () => {
-    await redis.set('email-triage:historyId', '999')
+    await redis.set('email-triage:test:historyId', '999')
     ;(gmail.listHistory as ReturnType<typeof vi.fn>).mockResolvedValue({
       historyId: '1005',
       history: [],
@@ -120,11 +121,11 @@ describe('GmailPoller', () => {
     await poller.poll()
     poller.stop()
 
-    expect(redis.set).toHaveBeenCalledWith('email-triage:historyId', '1005')
+    expect(redis.set).toHaveBeenCalledWith('email-triage:test:historyId', '1005')
   })
 
   it('handles history expired (410) by re-syncing', async () => {
-    await redis.set('email-triage:historyId', '999')
+    await redis.set('email-triage:test:historyId', '999')
 
     const { HistoryExpiredError } = await import('../src/gmail/client')
     ;(gmail.listHistory as ReturnType<typeof vi.fn>).mockRejectedValueOnce(

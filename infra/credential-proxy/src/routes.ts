@@ -1,8 +1,7 @@
 import type { FastifyInstance } from 'fastify'
-import { loadTokens, getValidAccessToken, type GmailTokens } from './oauth'
+import { loadTokens, getValidAccessToken, listAccounts, type GmailTokens } from './oauth'
 
 export function registerRoutes(app: FastifyInstance) {
-  let tokens: GmailTokens | null = loadTokens()
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY
 
   if (!anthropicApiKey) {
@@ -10,8 +9,24 @@ export function registerRoutes(app: FastifyInstance) {
     process.exit(1)
   }
 
-  if (!tokens) {
-    console.warn('WARNING: No Gmail tokens found. Run `bun run setup` first.')
+  // Cache loaded tokens per account
+  const tokenCache = new Map<string, GmailTokens>()
+
+  function getTokens(account: string): GmailTokens | null {
+    let tokens = tokenCache.get(account) ?? null
+    if (!tokens) {
+      tokens = loadTokens(account)
+      if (tokens) tokenCache.set(account, tokens)
+    }
+    return tokens
+  }
+
+  // Log configured accounts on startup
+  const accounts = listAccounts()
+  if (accounts.length === 0) {
+    console.warn('WARNING: No Gmail accounts configured. Run `bun run setup` first.')
+  } else {
+    console.log(`Gmail accounts configured: ${accounts.join(', ')}`)
   }
 
   // Anthropic proxy: /anthropic/* → api.anthropic.com/*
@@ -39,18 +54,18 @@ export function registerRoutes(app: FastifyInstance) {
     return reply.send(body)
   })
 
-  // Gmail proxy: /gmail/* → gmail.googleapis.com/*
-  app.all('/gmail/*', async (request, reply) => {
+  // Gmail proxy: /gmail/:account/* → gmail.googleapis.com/gmail/*
+  app.all('/gmail/:account/*', async (request, reply) => {
+    const { account } = request.params as { account: string; '*': string }
+    const path = (request.params as { '*': string })['*']
+
+    const tokens = getTokens(account)
     if (!tokens) {
-      tokens = loadTokens()
-      if (!tokens) {
-        reply.code(503)
-        return { error: 'Gmail tokens not configured. Run setup-oauth first.' }
-      }
+      reply.code(503)
+      return { error: `Gmail tokens not configured for account "${account}". Run setup-oauth first.` }
     }
 
-    const accessToken = await getValidAccessToken(tokens)
-    const path = (request.params as { '*': string })['*']
+    const accessToken = await getValidAccessToken(account, tokens)
     const url = new URL(`https://gmail.googleapis.com/gmail/${path}`)
 
     // Forward query params
@@ -77,18 +92,23 @@ export function registerRoutes(app: FastifyInstance) {
     })
 
     const body = await res.text()
-    console.log(`Gmail proxy: ${request.method} ${url.pathname} → ${res.status}`)
+    console.log(`Gmail proxy [${account}]: ${request.method} ${url.pathname} → ${res.status}`)
 
     reply.code(res.status)
     reply.header('content-type', 'application/json')
     return reply.send(body)
   })
 
+  // List configured accounts
+  app.get('/accounts', async () => {
+    return { accounts: listAccounts() }
+  })
+
   // Health check
   app.get('/health', async () => {
     return {
       status: 'healthy',
-      gmailConfigured: tokens !== null,
+      accounts: listAccounts(),
       anthropicConfigured: true,
     }
   })

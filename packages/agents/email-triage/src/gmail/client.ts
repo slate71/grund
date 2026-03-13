@@ -9,9 +9,11 @@ import type {
 
 export class GmailClient {
   private baseUrl: string
+  readonly account: string
 
-  constructor(proxyUrl: string) {
-    this.baseUrl = `${proxyUrl}/gmail`
+  constructor(proxyUrl: string, account: string) {
+    this.account = account
+    this.baseUrl = `${proxyUrl}/gmail/${account}`
   }
 
   async getProfile(): Promise<GmailProfile> {

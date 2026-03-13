@@ -22,35 +22,38 @@ const proxyUrl = process.env.CREDENTIAL_PROXY_URL!
 const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL || `${proxyUrl}/anthropic`
 const anthropicApiKey = process.env.ANTHROPIC_API_KEY || 'placeholder'
 
-const gmail = new GmailClient(proxyUrl)
+// Comma-separated list of account names matching token files
+const accounts = (process.env.GMAIL_ACCOUNTS || 'default').split(',').map((s) => s.trim())
+
 const newsletterConfig = loadNewsletterConfig()
 
-async function handleNewMessage(email: ParsedEmail): Promise<void> {
+async function handleNewMessage(email: ParsedEmail, account: string): Promise<void> {
   // Skip drafts and outbound-only sent messages (not self-sends)
   if (email.labels.includes('DRAFT')) {
-    console.log(`Skipping ${email.messageId} (draft)`)
+    console.log(`[${account}] Skipping ${email.messageId} (draft)`)
     return
   }
   if (email.labels.includes('SENT') && !email.labels.includes('INBOX')) {
-    console.log(`Skipping ${email.messageId} (sent, not inbox)`)
+    console.log(`[${account}] Skipping ${email.messageId} (sent, not inbox)`)
     return
   }
 
   // Skip already-processed messages
   if (await isAlreadyProcessed(pgClient, email.messageId)) {
-    console.log(`Skipping ${email.messageId} (already processed)`)
+    console.log(`[${account}] Skipping ${email.messageId} (already processed)`)
     return
   }
 
-  console.log(`Triaging: "${email.subject}" from ${email.from}`)
+  console.log(`[${account}] Triaging: "${email.subject}" from ${email.from}`)
 
+  const gmail = new GmailClient(proxyUrl, account)
   const decision = await classifyEmail(email, {
     anthropicBaseUrl,
     anthropicApiKey,
     newsletterConfig,
   })
 
-  console.log(`  → ${decision.category} (${decision.confidence}) — ${decision.reason}`)
+  console.log(`[${account}]   → ${decision.category} (${decision.confidence}) — ${decision.reason}`)
 
   const result = await executeActions(email, decision, {
     gmail,
@@ -74,6 +77,7 @@ async function handleNewMessage(email: ParsedEmail): Promise<void> {
   await redisClient.publish(
     'email-triage',
     JSON.stringify({
+      account,
       messageId: email.messageId,
       category: decision.category,
       subject: email.subject,
@@ -83,12 +87,6 @@ async function handleNewMessage(email: ParsedEmail): Promise<void> {
     }),
   )
 }
-
-const poller = new GmailPoller({
-  gmail,
-  redis: redisClient,
-  onNewMessage: handleNewMessage,
-})
 
 const app = createApp(pgClient, redisClient, () => isPostgresConnected)
 
@@ -105,10 +103,23 @@ async function start() {
 
   await createSchema(pgClient)
 
-  await poller.start()
+  // Start one poller per account
+  const pollers: GmailPoller[] = []
+  for (const account of accounts) {
+    const gmail = new GmailClient(proxyUrl, account)
+    const poller = new GmailPoller({
+      gmail,
+      redis: redisClient,
+      onNewMessage: (email) => handleNewMessage(email, account),
+    })
+    await poller.start()
+    pollers.push(poller)
+    console.log(`Polling account: ${account}`)
+  }
 
   await app.listen({ port: PORT, host: '0.0.0.0' })
   console.log(`Email triage agent running on port ${PORT}`)
+  console.log(`Accounts: ${accounts.join(', ')}`)
 }
 
 start().catch((err) => {

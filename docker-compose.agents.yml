@@ -61,6 +61,7 @@ services:
       CREDENTIAL_PROXY_URL: http://credential-proxy:9876
       ANTHROPIC_BASE_URL: http://credential-proxy:9876/anthropic
       ANTHROPIC_API_KEY: placeholder
+      GMAIL_ACCOUNTS: ${GMAIL_ACCOUNTS:-default}
       PORT: 3003
     ports:
       - '3003:3003'

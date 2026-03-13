@@ -10,7 +10,6 @@ export interface RedisClient {
   on(event: string, listener: (...args: unknown[]) => void): void
 }
 
-const HISTORY_ID_KEY = 'email-triage:historyId'
 const POLL_INTERVAL_MS = 15_000
 
 export interface PollerOptions {
@@ -25,6 +24,7 @@ export class GmailPoller {
   private redis: RedisClient
   private onNewMessage: (email: ParsedEmail) => Promise<void>
   private pollIntervalMs: number
+  private historyIdKey: string
   private timer: ReturnType<typeof setInterval> | null = null
   private polling = false
 
@@ -33,13 +33,14 @@ export class GmailPoller {
     this.redis = opts.redis
     this.onNewMessage = opts.onNewMessage
     this.pollIntervalMs = opts.pollIntervalMs ?? POLL_INTERVAL_MS
+    this.historyIdKey = `email-triage:${this.gmail.account}:historyId`
   }
 
   async start(): Promise<void> {
-    const stored = await this.redis.get(HISTORY_ID_KEY)
+    const stored = await this.redis.get(this.historyIdKey)
     if (!stored) {
       const profile = await this.gmail.getProfile()
-      await this.redis.set(HISTORY_ID_KEY, profile.historyId)
+      await this.redis.set(this.historyIdKey, profile.historyId)
       console.log(`Initialized historyId: ${profile.historyId}`)
     }
 
@@ -60,11 +61,11 @@ export class GmailPoller {
     this.polling = true
 
     try {
-      const historyId = await this.redis.get(HISTORY_ID_KEY)
+      const historyId = await this.redis.get(this.historyIdKey)
       if (!historyId) {
         console.error('No historyId in Redis, re-initializing')
         const profile = await this.gmail.getProfile()
-        await this.redis.set(HISTORY_ID_KEY, profile.historyId)
+        await this.redis.set(this.historyIdKey, profile.historyId)
         this.polling = false
         return
       }
@@ -97,7 +98,7 @@ export class GmailPoller {
         }
       }
 
-      await this.redis.set(HISTORY_ID_KEY, history.historyId)
+      await this.redis.set(this.historyIdKey, history.historyId)
 
       if (messageIds.size > 0) {
         console.log(`Processed ${messageIds.size} new message(s)`)
@@ -106,7 +107,7 @@ export class GmailPoller {
       if (err instanceof HistoryExpiredError) {
         console.warn('History expired, re-syncing from profile')
         const profile = await this.gmail.getProfile()
-        await this.redis.set(HISTORY_ID_KEY, profile.historyId)
+        await this.redis.set(this.historyIdKey, profile.historyId)
       } else {
         console.error('Poll error:', err)
       }

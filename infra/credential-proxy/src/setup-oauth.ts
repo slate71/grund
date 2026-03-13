@@ -11,6 +11,14 @@ const REDIRECT_PORT = 3456
 const REDIRECT_URI = `http://localhost:${REDIRECT_PORT}/callback`
 
 async function main() {
+  const account = process.argv[2]
+  if (!account) {
+    console.error('Usage: bun run setup-oauth.ts <account-name>')
+    console.error('Example: bun run setup-oauth.ts work')
+    console.error('Example: bun run setup-oauth.ts personal')
+    process.exit(1)
+  }
+
   const clientId = process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
@@ -28,6 +36,7 @@ async function main() {
   authUrl.searchParams.set('access_type', 'offline')
   authUrl.searchParams.set('prompt', 'consent')
 
+  console.log(`\nSetting up Gmail OAuth for account: ${account}`)
   console.log('\nOpen this URL in your browser:\n')
   console.log(authUrl.toString())
   console.log('\nWaiting for callback...')
@@ -68,8 +77,8 @@ async function main() {
     client_secret: clientSecret,
   }
 
-  saveTokens(tokens)
-  console.log('\nTokens saved to ~/.config/grund/gmail-tokens.json')
+  saveTokens(account, tokens)
+  console.log(`\nTokens saved for account "${account}"`)
   console.log('Setup complete.')
   process.exit(0)
 }

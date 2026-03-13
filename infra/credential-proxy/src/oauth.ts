@@ -1,11 +1,10 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { homedir } from 'node:os'
 
 const DOCKER_CONFIG_DIR = '/config'
 const LOCAL_CONFIG_DIR = resolve(homedir(), '.config/grund')
 const CONFIG_DIR = existsSync(DOCKER_CONFIG_DIR) ? DOCKER_CONFIG_DIR : LOCAL_CONFIG_DIR
-const TOKENS_PATH = resolve(CONFIG_DIR, 'gmail-tokens.json')
 
 export interface GmailTokens {
   access_token: string
@@ -16,20 +15,35 @@ export interface GmailTokens {
   client_secret: string
 }
 
-export function loadTokens(): GmailTokens | null {
-  if (!existsSync(TOKENS_PATH)) return null
-  const raw = readFileSync(TOKENS_PATH, 'utf-8')
+function tokensPath(account: string): string {
+  return resolve(CONFIG_DIR, `gmail-tokens-${account}.json`)
+}
+
+export function loadTokens(account: string): GmailTokens | null {
+  const path = tokensPath(account)
+  if (!existsSync(path)) return null
+  const raw = readFileSync(path, 'utf-8')
   return JSON.parse(raw) as GmailTokens
 }
 
-export function saveTokens(tokens: GmailTokens): void {
+export function saveTokens(account: string, tokens: GmailTokens): void {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true })
   }
-  writeFileSync(TOKENS_PATH, JSON.stringify(tokens, null, 2))
+  writeFileSync(tokensPath(account), JSON.stringify(tokens, null, 2))
 }
 
-export async function refreshAccessToken(tokens: GmailTokens): Promise<GmailTokens> {
+export function listAccounts(): string[] {
+  if (!existsSync(CONFIG_DIR)) return []
+  return readdirSync(CONFIG_DIR)
+    .filter((f) => f.startsWith('gmail-tokens-') && f.endsWith('.json'))
+    .map((f) => f.replace('gmail-tokens-', '').replace('.json', ''))
+}
+
+export async function refreshAccessToken(
+  account: string,
+  tokens: GmailTokens,
+): Promise<GmailTokens> {
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -42,7 +56,7 @@ export async function refreshAccessToken(tokens: GmailTokens): Promise<GmailToke
   })
 
   if (!res.ok) {
-    throw new Error(`Token refresh failed: ${res.status} ${await res.text()}`)
+    throw new Error(`Token refresh failed for ${account}: ${res.status} ${await res.text()}`)
   }
 
   const data = (await res.json()) as {
@@ -58,15 +72,18 @@ export async function refreshAccessToken(tokens: GmailTokens): Promise<GmailToke
     expiry_date: Date.now() + data.expires_in * 1000,
   }
 
-  saveTokens(updated)
+  saveTokens(account, updated)
   return updated
 }
 
-export async function getValidAccessToken(tokens: GmailTokens): Promise<string> {
+export async function getValidAccessToken(
+  account: string,
+  tokens: GmailTokens,
+): Promise<string> {
   if (Date.now() < tokens.expiry_date - 60_000) {
     return tokens.access_token
   }
-  console.log('Refreshing Gmail access token...')
-  const refreshed = await refreshAccessToken(tokens)
+  console.log(`Refreshing Gmail access token for ${account}...`)
+  const refreshed = await refreshAccessToken(account, tokens)
   return refreshed.access_token
 }
