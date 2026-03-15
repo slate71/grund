@@ -155,17 +155,7 @@
       },
       "devDependencies": {
         "pino-pretty": "^13",
-      },
-    },
-    "packages/react-hooks": {
-      "name": "@grund/react-hooks",
-      "version": "0.0.0",
-      "devDependencies": {
-        "@types/react": "^18.2.0",
         "typescript": "^5.6.0",
-      },
-      "peerDependencies": {
-        "react": "^18.2.0",
       },
     },
     "packages/shared": {
@@ -355,8 +345,6 @@
     "@grund/heartbeat-agent": ["@grund/heartbeat-agent@workspace:packages/agents/heartbeat"],
 
     "@grund/logger": ["@grund/logger@workspace:packages/logger"],
-
-    "@grund/react-hooks": ["@grund/react-hooks@workspace:packages/react-hooks"],
 
     "@grund/shared": ["@grund/shared@workspace:packages/shared"],
 
