@@ -1,6 +1,8 @@
 services:
   heartbeat-agent:
-    build: ./packages/agents/heartbeat
+    build:
+      context: .
+      dockerfile: packages/agents/heartbeat/Dockerfile
     container_name: grund-heartbeat
     depends_on:
       postgres:
@@ -45,7 +47,9 @@ services:
       retries: 3
 
   email-triage-agent:
-    build: ./packages/agents/email-triage
+    build:
+      context: .
+      dockerfile: packages/agents/email-triage/Dockerfile
     container_name: grund-email-triage
     depends_on:
       postgres:

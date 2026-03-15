@@ -4,12 +4,20 @@ RUN apk add --no-cache curl
 
 WORKDIR /app
 
-COPY package.json ./
-COPY tsconfig.json ./
+# Copy workspace package files
+COPY package.json bun.lock ./
+COPY packages/agents/email-triage/package.json ./packages/agents/email-triage/
+COPY packages/logger/package.json ./packages/logger/
 
-RUN bun install
+# Install dependencies
+RUN cd packages/agents/email-triage && bun install --frozen-lockfile
 
-COPY src ./src
+# Copy source code
+COPY packages/logger/src ./packages/logger/src
+COPY packages/agents/email-triage/src ./packages/agents/email-triage/src
+COPY packages/agents/email-triage/tsconfig.json ./packages/agents/email-triage/
+
+WORKDIR /app/packages/agents/email-triage
 
 EXPOSE 3002
 
