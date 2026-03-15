@@ -56,3 +56,8 @@ export interface GmailProfile {
   emailAddress: string
   historyId: string
 }
+
+export interface WatchResponse {
+  historyId: string
+  expiration: string
+}

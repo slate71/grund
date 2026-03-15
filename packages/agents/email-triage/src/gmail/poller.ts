@@ -1,4 +1,5 @@
-import { GmailClient, HistoryExpiredError, parseMessage } from './client'
+import { GmailClient } from './client'
+import { processHistory } from './history'
 import type { ParsedEmail } from './types'
 
 export interface RedisClient {
@@ -61,56 +62,14 @@ export class GmailPoller {
     this.polling = true
 
     try {
-      const historyId = await this.redis.get(this.historyIdKey)
-      if (!historyId) {
-        console.error('No historyId in Redis, re-initializing')
-        const profile = await this.gmail.getProfile()
-        await this.redis.set(this.historyIdKey, profile.historyId)
-        this.polling = false
-        return
-      }
-
-      const history = await this.gmail.listHistory(historyId)
-
-      const messageIds = new Set<string>()
-      if (history.history) {
-        for (const entry of history.history) {
-          if (entry.messagesAdded) {
-            for (const added of entry.messagesAdded) {
-              messageIds.add(added.message.id)
-            }
-          }
-        }
-      }
-
-      for (const id of messageIds) {
-        try {
-          const msg = await this.gmail.getMessage(id)
-          const parsed = parseMessage(msg)
-          await this.onNewMessage(parsed)
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err)
-          if (msg.includes('404')) {
-            console.warn(`Message ${id} not found (likely a label change event), skipping`)
-          } else {
-            console.error(`Failed to process message ${id}:`, err)
-          }
-        }
-      }
-
-      await this.redis.set(this.historyIdKey, history.historyId)
-
-      if (messageIds.size > 0) {
-        console.log(`Processed ${messageIds.size} new message(s)`)
-      }
+      await processHistory({
+        gmail: this.gmail,
+        redis: this.redis,
+        onNewMessage: this.onNewMessage,
+        historyIdKey: this.historyIdKey,
+      })
     } catch (err) {
-      if (err instanceof HistoryExpiredError) {
-        console.warn('History expired, re-syncing from profile')
-        const profile = await this.gmail.getProfile()
-        await this.redis.set(this.historyIdKey, profile.historyId)
-      } else {
-        console.error('Poll error:', err)
-      }
+      console.error('Poll error:', err)
     } finally {
       this.polling = false
     }

@@ -5,6 +5,7 @@ import type {
   GmailPayload,
   GmailPart,
   ParsedEmail,
+  WatchResponse,
 } from './types'
 
 export class GmailClient {
@@ -71,6 +72,19 @@ export class GmailClient {
     if (!res.ok) throw new Error(`Gmail createDraft failed: ${res.status} ${await res.text()}`)
     const data = (await res.json()) as { id: string }
     return data.id
+  }
+
+  async watch(topicName: string): Promise<WatchResponse> {
+    const res = await fetch(`${this.baseUrl}/v1/users/me/watch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topicName,
+        labelIds: ['INBOX'],
+      }),
+    })
+    if (!res.ok) throw new Error(`Gmail watch failed: ${res.status} ${await res.text()}`)
+    return res.json() as Promise<WatchResponse>
   }
 
   async getOrCreateLabel(name: string): Promise<string> {
