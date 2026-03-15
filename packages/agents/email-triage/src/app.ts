@@ -31,7 +31,7 @@ export function createApp(
   isPostgresConnected: () => boolean,
   log: Logger,
 ): FastifyInstance {
-  const app = Fastify({ logger: log })
+  const app = Fastify({ loggerInstance: log })
 
   app.get('/health', async () => {
     return {

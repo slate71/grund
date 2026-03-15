@@ -15,7 +15,7 @@ if (!databaseUrl) {
 }
 
 const db = createDb(databaseUrl)
-const app = Fastify({ logger: log })
+const app = Fastify({ loggerInstance: log })
 
 await app.register(cors, { origin: true })
 

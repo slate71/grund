@@ -4,7 +4,7 @@ import { log } from './logger'
 
 const PORT = parseInt(process.env.PORT || '9876', 10)
 
-const app = Fastify({ logger: log })
+const app = Fastify({ loggerInstance: log })
 
 registerRoutes(app)
 
