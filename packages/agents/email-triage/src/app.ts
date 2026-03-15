@@ -12,6 +12,16 @@ export function validateEnvironment() {
       process.exit(1)
     }
   }
+
+  if (process.env.GMAIL_NOTIFICATION_MODE === 'pubsub') {
+    const pubsubRequired = ['GCP_PROJECT_ID', 'PUBSUB_TOPIC']
+    for (const key of pubsubRequired) {
+      if (!process.env[key]) {
+        console.error(`ERROR: ${key} is required when GMAIL_NOTIFICATION_MODE=pubsub`)
+        process.exit(1)
+      }
+    }
+  }
 }
 
 export function createApp(
@@ -25,6 +35,7 @@ export function createApp(
     return {
       status: 'healthy',
       uptime: process.uptime(),
+      notificationMode: process.env.GMAIL_NOTIFICATION_MODE || 'poll',
       connections: {
         postgres: isPostgresConnected(),
         redis: redisClient.isReady,
