@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { processHistory } from '../src/gmail/history'
 import type { RedisClient } from '../src/gmail/poller'
 import type { GmailClient } from '../src/gmail/client'
+import { createMockLog } from './helpers'
 
 function createMockRedis(): RedisClient {
   const store = new Map<string, string>()
@@ -54,7 +55,7 @@ describe('processHistory', () => {
   })
 
   it('re-initializes from profile when no historyId in Redis', async () => {
-    await processHistory({ gmail, redis, onNewMessage, historyIdKey })
+    await processHistory({ gmail, redis, onNewMessage, historyIdKey, log: createMockLog() as never })
 
     expect(gmail.getProfile).toHaveBeenCalled()
     expect(redis.set).toHaveBeenCalledWith(historyIdKey, '1000')
@@ -71,7 +72,7 @@ describe('processHistory', () => {
       ],
     })
 
-    await processHistory({ gmail, redis, onNewMessage, historyIdKey })
+    await processHistory({ gmail, redis, onNewMessage, historyIdKey, log: createMockLog() as never })
 
     expect(onNewMessage).toHaveBeenCalledTimes(2)
   })
@@ -86,7 +87,7 @@ describe('processHistory', () => {
       ],
     })
 
-    await processHistory({ gmail, redis, onNewMessage, historyIdKey })
+    await processHistory({ gmail, redis, onNewMessage, historyIdKey, log: createMockLog() as never })
 
     expect(onNewMessage).toHaveBeenCalledTimes(1)
   })
@@ -98,7 +99,7 @@ describe('processHistory', () => {
       history: [],
     })
 
-    await processHistory({ gmail, redis, onNewMessage, historyIdKey })
+    await processHistory({ gmail, redis, onNewMessage, historyIdKey, log: createMockLog() as never })
 
     expect(redis.set).toHaveBeenCalledWith(historyIdKey, '1005')
   })
@@ -111,7 +112,7 @@ describe('processHistory', () => {
       new HistoryExpiredError('expired'),
     )
 
-    await processHistory({ gmail, redis, onNewMessage, historyIdKey })
+    await processHistory({ gmail, redis, onNewMessage, historyIdKey, log: createMockLog() as never })
 
     expect(gmail.getProfile).toHaveBeenCalled()
     expect(redis.set).toHaveBeenCalledWith(historyIdKey, '1000')
@@ -129,7 +130,7 @@ describe('processHistory', () => {
       new Error('getMessage failed: 404 Not Found'),
     )
 
-    await processHistory({ gmail, redis, onNewMessage, historyIdKey })
+    await processHistory({ gmail, redis, onNewMessage, historyIdKey, log: createMockLog() as never })
 
     expect(onNewMessage).not.toHaveBeenCalled()
     // historyId should still be updated

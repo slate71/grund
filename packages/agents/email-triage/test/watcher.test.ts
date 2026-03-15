@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { GmailWatcher } from '../src/gmail/watcher'
 import type { RedisClient } from '../src/gmail/poller'
 import type { GmailClient } from '../src/gmail/client'
+import { createMockLog } from './helpers'
 
 function createMockRedis(): RedisClient {
   const store = new Map<string, string>()
@@ -59,6 +60,7 @@ describe('GmailWatcher', () => {
       redis,
       topicName: 'projects/test/topics/gmail-notifications',
       onNewMessage,
+      log: createMockLog() as never,
     })
     await watcher.start()
     watcher.stop()
@@ -72,6 +74,7 @@ describe('GmailWatcher', () => {
       redis,
       topicName: 'projects/test/topics/gmail-notifications',
       onNewMessage,
+      log: createMockLog() as never,
     })
     await watcher.start()
     watcher.stop()
@@ -87,6 +90,7 @@ describe('GmailWatcher', () => {
       redis,
       topicName: 'projects/test/topics/gmail-notifications',
       onNewMessage,
+      log: createMockLog() as never,
     })
     await watcher.start()
     watcher.stop()
@@ -109,6 +113,7 @@ describe('GmailWatcher', () => {
       redis,
       topicName: 'projects/test/topics/gmail-notifications',
       onNewMessage,
+      log: createMockLog() as never,
     })
     await watcher.start()
     await watcher.handleNotification()
@@ -128,6 +133,7 @@ describe('GmailWatcher', () => {
       redis,
       topicName: 'projects/test/topics/gmail-notifications',
       onNewMessage,
+      log: createMockLog() as never,
     })
 
     // Should not throw
