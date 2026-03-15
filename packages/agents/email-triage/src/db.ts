@@ -88,6 +88,35 @@ export async function getTriageStats(
   return result.rows as { category: string; count: number }[]
 }
 
+export async function createBriefSchema(pgClient: Client): Promise<void> {
+  await pgClient.query(`
+    CREATE TABLE IF NOT EXISTS daily_briefs (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      period_start TIMESTAMPTZ NOT NULL,
+      period_end TIMESTAMPTZ NOT NULL,
+      email_count INTEGER NOT NULL,
+      subject TEXT NOT NULL,
+      sent_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    )
+  `)
+
+  await pgClient.query(`
+    CREATE INDEX IF NOT EXISTS idx_daily_briefs_sent_at
+    ON daily_briefs(sent_at)
+  `)
+}
+
+export async function getRecentBriefs(
+  pgClient: Client,
+  limit: number = 10,
+): Promise<Record<string, unknown>[]> {
+  const result = await pgClient.query(
+    'SELECT * FROM daily_briefs ORDER BY sent_at DESC LIMIT $1',
+    [limit],
+  )
+  return result.rows
+}
+
 export async function isAlreadyProcessed(
   pgClient: Client,
   gmailMessageId: string,

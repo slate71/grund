@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { GmailPoller, type RedisClient } from '../src/gmail/poller'
 import type { GmailClient } from '../src/gmail/client'
+import { createMockLog } from './helpers'
 
 function createMockRedis(): RedisClient {
   const store = new Map<string, string>()
@@ -55,7 +56,7 @@ describe('GmailPoller', () => {
   })
 
   it('initializes historyId from Gmail profile on first start', async () => {
-    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000 })
+    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000, log: createMockLog() as never })
     await poller.start()
     poller.stop()
 
@@ -66,7 +67,7 @@ describe('GmailPoller', () => {
   it('skips profile fetch if historyId already in Redis', async () => {
     await redis.set('email-triage:test:historyId', '999')
 
-    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000 })
+    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000, log: createMockLog() as never })
     await poller.start()
     poller.stop()
 
@@ -83,7 +84,7 @@ describe('GmailPoller', () => {
       ],
     })
 
-    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000 })
+    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000, log: createMockLog() as never })
     await poller.start()
     await poller.poll()
     poller.stop()
@@ -101,7 +102,7 @@ describe('GmailPoller', () => {
       ],
     })
 
-    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000 })
+    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000, log: createMockLog() as never })
     await poller.start()
     await poller.poll()
     poller.stop()
@@ -116,7 +117,7 @@ describe('GmailPoller', () => {
       history: [],
     })
 
-    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000 })
+    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000, log: createMockLog() as never })
     await poller.start()
     await poller.poll()
     poller.stop()
@@ -132,7 +133,7 @@ describe('GmailPoller', () => {
       new HistoryExpiredError('expired'),
     )
 
-    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000 })
+    const poller = new GmailPoller({ gmail, redis, onNewMessage, pollIntervalMs: 100_000, log: createMockLog() as never })
     await poller.start()
     await poller.poll()
     poller.stop()

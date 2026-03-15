@@ -88,6 +88,17 @@ export class GmailClient {
     return res.json() as Promise<WatchResponse>
   }
 
+  async sendMessage(raw: string): Promise<string> {
+    const res = await fetch(`${this.baseUrl}/v1/users/me/messages/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw }),
+    })
+    if (!res.ok) throw new Error(`Gmail sendMessage failed: ${res.status} ${await res.text()}`)
+    const data = (await res.json()) as { id: string }
+    return data.id
+  }
+
   async getOrCreateLabel(name: string): Promise<string> {
     const res = await fetch(`${this.baseUrl}/v1/users/me/labels`)
     if (!res.ok) throw new Error(`Gmail listLabels failed: ${res.status}`)

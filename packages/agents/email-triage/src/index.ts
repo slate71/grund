@@ -9,8 +9,10 @@ import type { ParsedEmail } from './gmail/types'
 import { classifyEmail } from './triage/classifier'
 import { executeActions } from './triage/actions'
 import { loadNewsletterConfig } from './config/newsletters'
-import { createSchema, recordProcessedEmail, isAlreadyProcessed } from './db'
+import { createSchema, createBriefSchema, recordProcessedEmail, isAlreadyProcessed } from './db'
 import { createLogger } from '@grund/logger'
+import { startBriefScheduler } from './brief/scheduler'
+import type { BriefConfig } from './brief/types'
 
 const PORT = parseInt(process.env.PORT || '3002', 10)
 const NOTIFICATION_MODE = process.env.GMAIL_NOTIFICATION_MODE || 'poll'
@@ -32,6 +34,13 @@ const anthropicApiKey = process.env.ANTHROPIC_API_KEY || 'placeholder'
 const accounts = (process.env.GMAIL_ACCOUNTS || 'default').split(',').map((s) => s.trim())
 
 const newsletterConfig = loadNewsletterConfig()
+
+// Brief configuration from environment
+const BRIEF_ENABLED = process.env.BRIEF_ENABLED !== 'false' // enabled by default
+const BRIEF_SCHEDULE_HOURS = (process.env.BRIEF_SCHEDULE_HOURS || '7,15')
+  .split(',')
+  .map((h) => parseInt(h.trim(), 10))
+const BRIEF_TIMEZONE = process.env.BRIEF_TIMEZONE || 'America/Los_Angeles'
 
 async function handleNewMessage(email: ParsedEmail, account: string): Promise<void> {
   const accountLog = log.child({ account })
@@ -167,11 +176,36 @@ async function start() {
   log.info('Connected to PostgreSQL and Redis')
 
   await createSchema(pgClient)
+  await createBriefSchema(pgClient)
 
   if (NOTIFICATION_MODE === 'pubsub') {
     await startPubSub()
   } else {
     await startPolling()
+  }
+
+  // Start daily brief scheduler
+  if (BRIEF_ENABLED) {
+    const primaryAccount = accounts[0]
+    const gmail = new GmailClient(proxyUrl, primaryAccount)
+    const profile = await gmail.getProfile()
+
+    const briefConfig: BriefConfig = {
+      scheduleHours: BRIEF_SCHEDULE_HOURS,
+      timezone: BRIEF_TIMEZONE,
+    }
+
+    startBriefScheduler({
+      pgClient,
+      gmail,
+      recipientEmail: process.env.BRIEF_RECIPIENT || profile.emailAddress,
+      anthropicBaseUrl,
+      anthropicApiKey,
+      config: briefConfig,
+      log: log.child({ module: 'brief' }),
+    })
+
+    log.info({ scheduleHours: BRIEF_SCHEDULE_HOURS, timezone: BRIEF_TIMEZONE }, 'Daily brief enabled')
   }
 
   await app.listen({ port: PORT, host: '0.0.0.0' })

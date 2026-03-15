@@ -2,7 +2,7 @@ import Fastify from 'fastify'
 import type { FastifyInstance } from 'fastify'
 import { Client } from 'pg'
 import type { RedisClient } from './gmail/poller'
-import { getRecentEmails, getTriageStats } from './db'
+import { getRecentEmails, getTriageStats, getRecentBriefs } from './db'
 import type { Logger } from '@grund/logger'
 
 export function validateEnvironment(log: Logger) {
@@ -60,6 +60,15 @@ export function createApp(
     } catch {
       reply.code(500)
       return { error: 'Failed to fetch triage stats' }
+    }
+  })
+
+  app.get('/brief/recent', async (_request, reply) => {
+    try {
+      return await getRecentBriefs(pgClient)
+    } catch {
+      reply.code(500)
+      return { error: 'Failed to fetch recent briefs' }
     }
   })
 
