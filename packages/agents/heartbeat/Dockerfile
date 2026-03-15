@@ -11,7 +11,7 @@ COPY packages/agents/heartbeat/package.json ./packages/agents/heartbeat/
 COPY packages/logger/package.json ./packages/logger/
 
 # Install dependencies
-RUN cd packages/agents/heartbeat && bun install --frozen-lockfile
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY packages/logger/src ./packages/logger/src
