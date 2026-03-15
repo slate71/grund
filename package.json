@@ -8,7 +8,8 @@
   "license": "MIT",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "packages/agents/*"
   ],
   "scripts": {
     "dev": "bun run --filter '@grund/api' dev & bun run --filter '@grund/dashboard' dev",

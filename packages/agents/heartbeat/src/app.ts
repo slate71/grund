@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import type { FastifyInstance } from 'fastify'
 import type { ServerResponse } from 'node:http'
 import { Client } from 'pg'
+import type { Logger } from '@grund/logger'
 
 export interface RedisClient {
   connect(): Promise<unknown>
@@ -10,20 +11,18 @@ export interface RedisClient {
   on(event: string, listener: (...args: unknown[]) => void): void
 }
 
-// Validate required environment variables
-export function validateEnvironment() {
+export function validateEnvironment(log: Logger) {
   if (!process.env.DATABASE_URL) {
-    console.error('ERROR: DATABASE_URL environment variable is required')
+    log.error('DATABASE_URL environment variable is required')
     process.exit(1)
   }
 
   if (!process.env.REDIS_URL) {
-    console.error('ERROR: REDIS_URL environment variable is required')
+    log.error('REDIS_URL environment variable is required')
     process.exit(1)
   }
 }
 
-// Create Fastify app
 export function createApp(
   pgClient: Client,
   redisClient: RedisClient,
@@ -32,29 +31,23 @@ export function createApp(
 ): FastifyInstance {
   const app = Fastify()
 
-  // SSE endpoint
   app.get('/heartbeat/stream', (request, reply) => {
     reply.raw.setHeader('Content-Type', 'text/event-stream')
     reply.raw.setHeader('Cache-Control', 'no-cache')
     reply.raw.setHeader('Connection', 'keep-alive')
     reply.raw.setHeader('Access-Control-Allow-Origin', '*')
 
-    // Send initial connection message
     reply.raw.write('data: {"connected": true}\n\n')
 
-    // Add client to set
     sseClients.add(reply.raw)
 
-    // Remove client on disconnect
     request.raw.on('close', () => {
       sseClients.delete(reply.raw)
     })
 
-    // Prevent Fastify from ending the response
     reply.hijack()
   })
 
-  // Health check endpoint
   app.get('/health', async () => {
     return {
       status: 'healthy',
@@ -67,7 +60,6 @@ export function createApp(
     }
   })
 
-  // Get recent heartbeats
   app.get('/heartbeat/recent', async (_request, reply) => {
     try {
       const result = await pgClient.query(
@@ -83,17 +75,16 @@ export function createApp(
   return app
 }
 
-// Create heartbeat function
 export function createHeartbeatFunction(
   pgClient: Client,
   redisClient: RedisClient,
   sseClients: Set<ServerResponse>,
   isHeartbeatRunning: { value: boolean },
+  log: Logger,
 ) {
   return async function sendHeartbeat() {
-    // Prevent overlapping heartbeat executions
     if (isHeartbeatRunning.value) {
-      console.log('Heartbeat already in progress, skipping...')
+      log.debug('Heartbeat already in progress, skipping')
       return
     }
 
@@ -102,7 +93,6 @@ export function createHeartbeatFunction(
     const agentName = process.env.AGENT_NAME || 'heartbeat'
 
     try {
-      // Log to database
       const result = await pgClient.query(
         'INSERT INTO heartbeats (timestamp, agent_name, status, metadata) VALUES ($1, $2, $3, $4) RETURNING *',
         [
@@ -113,7 +103,6 @@ export function createHeartbeatFunction(
         ],
       )
 
-      // Publish to Redis for other services
       await redisClient.publish(
         'heartbeat',
         JSON.stringify({
@@ -123,7 +112,6 @@ export function createHeartbeatFunction(
         }),
       )
 
-      // Broadcast to SSE clients
       const heartbeatData = {
         id: result.rows[0].id,
         timestamp,
@@ -135,22 +123,20 @@ export function createHeartbeatFunction(
         client.write(`data: ${JSON.stringify(heartbeatData)}\n\n`)
       })
 
-      console.log(`Heartbeat sent at ${timestamp}`)
+      log.info({ timestamp }, 'Heartbeat sent')
     } catch (error) {
-      console.error('Failed to send heartbeat:', error)
+      log.error({ err: error }, 'Failed to send heartbeat')
     } finally {
       isHeartbeatRunning.value = false
     }
   }
 }
 
-// Initialize database connections
-export async function initializeConnections(pgClient: Client, redisClient: RedisClient) {
+export async function initializeConnections(pgClient: Client, redisClient: RedisClient, log: Logger) {
   await pgClient.connect()
   await redisClient.connect()
-  console.log('Connected to PostgreSQL and Redis')
+  log.info('Connected to PostgreSQL and Redis')
 
-  // Create heartbeat table if it doesn't exist
   await pgClient.query(`
     CREATE TABLE IF NOT EXISTS heartbeats (
       id SERIAL PRIMARY KEY,
@@ -161,17 +147,16 @@ export async function initializeConnections(pgClient: Client, redisClient: Redis
     )
   `)
 
-  // Create index on timestamp for efficient cleanup queries
   await pgClient.query(`
     CREATE INDEX IF NOT EXISTS idx_heartbeats_timestamp
     ON heartbeats(timestamp)
   `)
 }
 
-// Cleanup old heartbeat records
 export async function cleanupOldHeartbeats(
   pgClient: Client,
   retentionDays: number = 30,
+  log: Logger,
 ): Promise<number> {
   try {
     const result = await pgClient.query(
@@ -182,11 +167,11 @@ export async function cleanupOldHeartbeats(
 
     const deletedCount = result.rowCount || 0
     if (deletedCount > 0) {
-      console.log(`Cleaned up ${deletedCount} heartbeat records older than ${retentionDays} days`)
+      log.info({ deletedCount, retentionDays }, 'Cleaned up old heartbeat records')
     }
     return deletedCount
   } catch (error) {
-    console.error('Failed to cleanup old heartbeats:', error)
+    log.error({ err: error }, 'Failed to cleanup old heartbeats')
     return 0
   }
 }

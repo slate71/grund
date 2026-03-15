@@ -1,5 +1,6 @@
 import { createServer } from 'node:http'
 import { saveTokens, type GmailTokens } from './oauth'
+import { log } from './logger'
 
 const SCOPES = [
   'https://www.googleapis.com/auth/gmail.modify',
@@ -13,9 +14,9 @@ const REDIRECT_URI = `http://localhost:${REDIRECT_PORT}/callback`
 async function main() {
   const account = process.argv[2]
   if (!account) {
-    console.error('Usage: bun run setup-oauth.ts <account-name>')
-    console.error('Example: bun run setup-oauth.ts work')
-    console.error('Example: bun run setup-oauth.ts personal')
+    log.error('Usage: bun run setup-oauth.ts <account-name>')
+    log.error('Example: bun run setup-oauth.ts work')
+    log.error('Example: bun run setup-oauth.ts personal')
     process.exit(1)
   }
 
@@ -23,8 +24,7 @@ async function main() {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET
 
   if (!clientId || !clientSecret) {
-    console.error('Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables')
-    console.error('Create credentials at https://console.cloud.google.com/apis/credentials')
+    log.error('Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables')
     process.exit(1)
   }
 
@@ -36,14 +36,13 @@ async function main() {
   authUrl.searchParams.set('access_type', 'offline')
   authUrl.searchParams.set('prompt', 'consent')
 
-  console.log(`\nSetting up Gmail OAuth for account: ${account}`)
-  console.log('\nOpen this URL in your browser:\n')
-  console.log(authUrl.toString())
-  console.log('\nWaiting for callback...')
+  log.info({ account }, 'Setting up Gmail OAuth')
+  log.info({ url: authUrl.toString() }, 'Open this URL in your browser')
+  log.info('Waiting for callback...')
 
   const code = await waitForAuthCode()
 
-  console.log('Exchanging code for tokens...')
+  log.info('Exchanging code for tokens...')
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -57,7 +56,7 @@ async function main() {
   })
 
   if (!res.ok) {
-    console.error('Token exchange failed:', await res.text())
+    log.error({ status: res.status, body: await res.text() }, 'Token exchange failed')
     process.exit(1)
   }
 
@@ -78,8 +77,7 @@ async function main() {
   }
 
   saveTokens(account, tokens)
-  console.log(`\nTokens saved for account "${account}"`)
-  console.log('Setup complete.')
+  log.info({ account }, 'Tokens saved. Setup complete.')
   process.exit(0)
 }
 
@@ -114,4 +112,4 @@ function waitForAuthCode(): Promise<string> {
   })
 }
 
-main().catch(console.error)
+main().catch((err) => log.error({ err }, 'Setup failed'))

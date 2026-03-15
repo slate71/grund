@@ -1,6 +1,7 @@
 import { GmailClient } from './client'
 import { processHistory } from './history'
 import type { ParsedEmail } from './types'
+import type { Logger } from '@grund/logger'
 
 export interface RedisClient {
   connect(): Promise<unknown>
@@ -18,6 +19,7 @@ export interface PollerOptions {
   redis: RedisClient
   onNewMessage: (email: ParsedEmail) => Promise<void>
   pollIntervalMs?: number
+  log: Logger
 }
 
 export class GmailPoller {
@@ -28,6 +30,7 @@ export class GmailPoller {
   private historyIdKey: string
   private timer: ReturnType<typeof setInterval> | null = null
   private polling = false
+  private log: Logger
 
   constructor(opts: PollerOptions) {
     this.gmail = opts.gmail
@@ -35,6 +38,7 @@ export class GmailPoller {
     this.onNewMessage = opts.onNewMessage
     this.pollIntervalMs = opts.pollIntervalMs ?? POLL_INTERVAL_MS
     this.historyIdKey = `email-triage:${this.gmail.account}:historyId`
+    this.log = opts.log
   }
 
   async start(): Promise<void> {
@@ -42,11 +46,11 @@ export class GmailPoller {
     if (!stored) {
       const profile = await this.gmail.getProfile()
       await this.redis.set(this.historyIdKey, profile.historyId)
-      console.log(`Initialized historyId: ${profile.historyId}`)
+      this.log.info({ historyId: profile.historyId }, 'Initialized historyId')
     }
 
     this.timer = setInterval(() => this.poll(), this.pollIntervalMs)
-    console.log(`Gmail poller started (every ${this.pollIntervalMs / 1000}s)`)
+    this.log.info({ intervalSecs: this.pollIntervalMs / 1000 }, 'Gmail poller started')
   }
 
   stop(): void {
@@ -54,7 +58,7 @@ export class GmailPoller {
       clearInterval(this.timer)
       this.timer = null
     }
-    console.log('Gmail poller stopped')
+    this.log.info('Gmail poller stopped')
   }
 
   async poll(): Promise<void> {
@@ -67,9 +71,10 @@ export class GmailPoller {
         redis: this.redis,
         onNewMessage: this.onNewMessage,
         historyIdKey: this.historyIdKey,
+        log: this.log,
       })
     } catch (err) {
-      console.error('Poll error:', err)
+      this.log.error({ err }, 'Poll error')
     } finally {
       this.polling = false
     }

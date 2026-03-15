@@ -1,15 +1,15 @@
 import type { FastifyInstance } from 'fastify'
 import { loadTokens, getValidAccessToken, listAccounts, type GmailTokens } from './oauth'
+import { log } from './logger'
 
 export function registerRoutes(app: FastifyInstance) {
   const anthropicApiKey = process.env.ANTHROPIC_API_KEY
 
   if (!anthropicApiKey) {
-    console.error('ERROR: ANTHROPIC_API_KEY environment variable is required')
+    log.error('ANTHROPIC_API_KEY environment variable is required')
     process.exit(1)
   }
 
-  // Cache loaded tokens per account
   const tokenCache = new Map<string, GmailTokens>()
 
   function getTokens(account: string): GmailTokens | null {
@@ -21,15 +21,13 @@ export function registerRoutes(app: FastifyInstance) {
     return tokens
   }
 
-  // Log configured accounts on startup
   const accounts = listAccounts()
   if (accounts.length === 0) {
-    console.warn('WARNING: No Gmail accounts configured. Run `bun run setup` first.')
+    log.warn('No Gmail accounts configured. Run `bun run setup` first.')
   } else {
-    console.log(`Gmail accounts configured: ${accounts.join(', ')}`)
+    log.info({ accounts }, 'Gmail accounts configured')
   }
 
-  // Anthropic proxy: /anthropic/* → api.anthropic.com/*
   app.all('/anthropic/*', async (request, reply) => {
     const path = (request.params as { '*': string })['*']
     const targetUrl = `https://api.anthropic.com/${path}`
@@ -47,14 +45,13 @@ export function registerRoutes(app: FastifyInstance) {
     })
 
     const body = await res.text()
-    console.log(`Anthropic proxy: ${request.method} ${path} → ${res.status}`)
+    log.info({ method: request.method, path, status: res.status }, 'Anthropic proxy')
 
     reply.code(res.status)
     reply.header('content-type', 'application/json')
     return reply.send(body)
   })
 
-  // Gmail proxy: /gmail/:account/* → gmail.googleapis.com/gmail/*
   app.all('/gmail/:account/*', async (request, reply) => {
     const { account } = request.params as { account: string; '*': string }
     const path = (request.params as { '*': string })['*']
@@ -68,7 +65,6 @@ export function registerRoutes(app: FastifyInstance) {
     const accessToken = await getValidAccessToken(account, tokens)
     const url = new URL(`https://gmail.googleapis.com/gmail/${path}`)
 
-    // Forward query params
     const rawUrl = request.url
     const qIndex = rawUrl.indexOf('?')
     if (qIndex !== -1) {
@@ -92,19 +88,17 @@ export function registerRoutes(app: FastifyInstance) {
     })
 
     const body = await res.text()
-    console.log(`Gmail proxy [${account}]: ${request.method} ${url.pathname} → ${res.status}`)
+    log.info({ account, method: request.method, path: url.pathname, status: res.status }, 'Gmail proxy')
 
     reply.code(res.status)
     reply.header('content-type', 'application/json')
     return reply.send(body)
   })
 
-  // List configured accounts
   app.get('/accounts', async () => {
     return { accounts: listAccounts() }
   })
 
-  // Health check
   app.get('/health', async () => {
     return {
       status: 'healthy',

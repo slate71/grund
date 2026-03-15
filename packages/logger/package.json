@@ -1,0 +1,13 @@
+{
+  "name": "@grund/logger",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "pino": "^9"
+  },
+  "devDependencies": {
+    "pino-pretty": "^13"
+  }
+}

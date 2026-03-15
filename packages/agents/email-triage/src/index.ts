@@ -10,11 +10,14 @@ import { classifyEmail } from './triage/classifier'
 import { executeActions } from './triage/actions'
 import { loadNewsletterConfig } from './config/newsletters'
 import { createSchema, recordProcessedEmail, isAlreadyProcessed } from './db'
+import { createLogger } from '@grund/logger'
 
 const PORT = parseInt(process.env.PORT || '3002', 10)
 const NOTIFICATION_MODE = process.env.GMAIL_NOTIFICATION_MODE || 'poll'
 
-validateEnvironment()
+const log = createLogger('email-triage')
+
+validateEnvironment(log)
 
 const pgClient = new Client({ connectionString: process.env.DATABASE_URL })
 const redisClient = createClient({ url: process.env.REDIS_URL }) as unknown as RedisClient
@@ -31,23 +34,25 @@ const accounts = (process.env.GMAIL_ACCOUNTS || 'default').split(',').map((s) =>
 const newsletterConfig = loadNewsletterConfig()
 
 async function handleNewMessage(email: ParsedEmail, account: string): Promise<void> {
+  const accountLog = log.child({ account })
+
   // Skip drafts and outbound-only sent messages (not self-sends)
   if (email.labels.includes('DRAFT')) {
-    console.log(`[${account}] Skipping ${email.messageId} (draft)`)
+    accountLog.debug({ messageId: email.messageId }, 'Skipping (draft)')
     return
   }
   if (email.labels.includes('SENT') && !email.labels.includes('INBOX')) {
-    console.log(`[${account}] Skipping ${email.messageId} (sent, not inbox)`)
+    accountLog.debug({ messageId: email.messageId }, 'Skipping (sent, not inbox)')
     return
   }
 
   // Skip already-processed messages
   if (await isAlreadyProcessed(pgClient, email.messageId)) {
-    console.log(`[${account}] Skipping ${email.messageId} (already processed)`)
+    accountLog.debug({ messageId: email.messageId }, 'Skipping (already processed)')
     return
   }
 
-  console.log(`[${account}] Triaging: "${email.subject}" from ${email.from}`)
+  accountLog.info({ messageId: email.messageId, subject: email.subject, from: email.from }, 'Triaging')
 
   const gmail = new GmailClient(proxyUrl, account)
   const decision = await classifyEmail(email, {
@@ -56,12 +61,16 @@ async function handleNewMessage(email: ParsedEmail, account: string): Promise<vo
     newsletterConfig,
   })
 
-  console.log(`[${account}]   → ${decision.category} (${decision.confidence}) — ${decision.reason}`)
+  accountLog.info(
+    { messageId: email.messageId, category: decision.category, confidence: decision.confidence, reason: decision.reason },
+    'Classified',
+  )
 
   const result = await executeActions(email, decision, {
     gmail,
     anthropicBaseUrl,
     anthropicApiKey,
+    log: accountLog,
   })
 
   await recordProcessedEmail(pgClient, {
@@ -91,10 +100,10 @@ async function handleNewMessage(email: ParsedEmail, account: string): Promise<vo
   )
 }
 
-const app = createApp(pgClient, redisClient, () => isPostgresConnected)
+const app = createApp(pgClient, redisClient, () => isPostgresConnected, log)
 
 pgClient.on('error', (err: Error) => {
-  console.error('PostgreSQL error:', err)
+  log.error({ err }, 'PostgreSQL error')
   isPostgresConnected = false
 })
 
@@ -106,10 +115,11 @@ async function startPolling() {
       gmail,
       redis: redisClient,
       onNewMessage: (email) => handleNewMessage(email, account),
+      log: log.child({ account }),
     })
     await poller.start()
     pollers.push(poller)
-    console.log(`Polling account: ${account}`)
+    log.info({ account }, 'Polling account')
   }
 }
 
@@ -118,7 +128,7 @@ async function startPubSub() {
   const subscriptionName = process.env.PUBSUB_SUBSCRIPTION || 'gmail-notifications-pull'
   const topicName = process.env.PUBSUB_TOPIC!
 
-  const listener = new PubSubListener(projectId, subscriptionName)
+  const listener = new PubSubListener(projectId, subscriptionName, log)
 
   const watchers: GmailWatcher[] = []
   for (const account of accounts) {
@@ -128,6 +138,7 @@ async function startPubSub() {
       redis: redisClient,
       topicName,
       onNewMessage: (email) => handleNewMessage(email, account),
+      log: log.child({ account }),
     })
     await watcher.start()
     watchers.push(watcher)
@@ -135,7 +146,7 @@ async function startPubSub() {
     // Get account email for pub/sub routing
     const profile = await gmail.getProfile()
     listener.onNotification(profile.emailAddress, () => watcher.handleNotification())
-    console.log(`Watching account: ${account} (${profile.emailAddress})`)
+    log.info({ account, email: profile.emailAddress }, 'Watching account')
   }
 
   await listener.start()
@@ -145,7 +156,7 @@ async function start() {
   await pgClient.connect()
   await redisClient.connect()
   isPostgresConnected = true
-  console.log('Connected to PostgreSQL and Redis')
+  log.info('Connected to PostgreSQL and Redis')
 
   await createSchema(pgClient)
 
@@ -156,11 +167,10 @@ async function start() {
   }
 
   await app.listen({ port: PORT, host: '0.0.0.0' })
-  console.log(`Email triage agent running on port ${PORT} (mode: ${NOTIFICATION_MODE})`)
-  console.log(`Accounts: ${accounts.join(', ')}`)
+  log.info({ port: PORT, mode: NOTIFICATION_MODE, accounts }, 'Email triage agent running')
 }
 
 start().catch((err) => {
-  console.error('Failed to start:', err)
+  log.error({ err }, 'Failed to start')
   process.exit(1)
 })

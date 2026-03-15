@@ -7,6 +7,9 @@ import type {
   ParsedEmail,
   WatchResponse,
 } from './types'
+import { createLogger } from '@grund/logger'
+
+const log = createLogger('email-triage')
 
 export class GmailClient {
   private baseUrl: string
@@ -124,8 +127,10 @@ export function parseMessage(msg: GmailMessage): ParsedEmail {
   const body = extractBody(msg.payload)
 
   if (!subject && !body) {
-    console.warn(`Empty subject+body for ${msg.id}, headers:`, msg.payload.headers.map((h) => h.name))
-    console.warn(`  mimeType: ${msg.payload.mimeType}, parts: ${msg.payload.parts?.length ?? 0}`)
+    log.warn(
+      { messageId: msg.id, headers: msg.payload.headers.map((h) => h.name), mimeType: msg.payload.mimeType, parts: msg.payload.parts?.length ?? 0 },
+      'Empty subject+body',
+    )
   }
 
   return {

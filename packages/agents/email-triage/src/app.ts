@@ -3,12 +3,13 @@ import type { FastifyInstance } from 'fastify'
 import { Client } from 'pg'
 import type { RedisClient } from './gmail/poller'
 import { getRecentEmails, getTriageStats } from './db'
+import type { Logger } from '@grund/logger'
 
-export function validateEnvironment() {
+export function validateEnvironment(log: Logger) {
   const required = ['DATABASE_URL', 'REDIS_URL', 'CREDENTIAL_PROXY_URL']
   for (const key of required) {
     if (!process.env[key]) {
-      console.error(`ERROR: ${key} environment variable is required`)
+      log.error(`${key} environment variable is required`)
       process.exit(1)
     }
   }
@@ -17,7 +18,7 @@ export function validateEnvironment() {
     const pubsubRequired = ['GCP_PROJECT_ID', 'PUBSUB_TOPIC']
     for (const key of pubsubRequired) {
       if (!process.env[key]) {
-        console.error(`ERROR: ${key} is required when GMAIL_NOTIFICATION_MODE=pubsub`)
+        log.error(`${key} is required when GMAIL_NOTIFICATION_MODE=pubsub`)
         process.exit(1)
       }
     }
@@ -28,8 +29,9 @@ export function createApp(
   pgClient: Client,
   redisClient: RedisClient,
   isPostgresConnected: () => boolean,
+  log: Logger,
 ): FastifyInstance {
-  const app = Fastify()
+  const app = Fastify({ logger: log })
 
   app.get('/health', async () => {
     return {

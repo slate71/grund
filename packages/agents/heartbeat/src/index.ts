@@ -10,89 +10,77 @@ import {
   cleanupOldHeartbeats,
   type RedisClient,
 } from './app'
+import { createLogger } from '@grund/logger'
 
 const PORT = parseInt(process.env.PORT || '3001', 10)
 
-// Validate required environment variables
-validateEnvironment()
+const log = createLogger('heartbeat')
 
-// Database connection
+validateEnvironment(log)
+
 const pgClient = new Client({
   connectionString: process.env.DATABASE_URL,
 })
 
-// Redis connection
 const redisClient = createClient({
   url: process.env.REDIS_URL,
 }) as unknown as RedisClient
 
-// Store for SSE clients
 const sseClients = new Set<ServerResponse>()
 
-// Track PostgreSQL connection status
 let isPostgresConnected = false
 
-// Track if heartbeat is currently running
 const isHeartbeatRunning = { value: false }
 
-// Initialize connections
 async function init() {
   try {
-    await initializeConnections(pgClient, redisClient)
+    await initializeConnections(pgClient, redisClient, log)
     isPostgresConnected = true
   } catch (error) {
-    console.error('Failed to initialize connections:', error)
+    log.error({ err: error }, 'Failed to initialize connections')
     isPostgresConnected = false
     process.exit(1)
   }
 }
 
-// Setup PostgreSQL event listeners
 pgClient.on('error', (err: Error) => {
-  console.error('PostgreSQL client error:', err)
+  log.error({ err }, 'PostgreSQL client error')
   isPostgresConnected = false
 })
 
 pgClient.on('end', () => {
-  console.log('PostgreSQL connection closed')
+  log.info('PostgreSQL connection closed')
   isPostgresConnected = false
 })
 
-// Create heartbeat function
-const sendHeartbeat = createHeartbeatFunction(pgClient, redisClient, sseClients, isHeartbeatRunning)
+const sendHeartbeat = createHeartbeatFunction(pgClient, redisClient, sseClients, isHeartbeatRunning, log)
 
-// Create app with endpoints
 const app = createApp(pgClient, redisClient, sseClients, () => isPostgresConnected)
 
-// Start server and initialize
 async function start() {
   await init()
 
-  // Schedule heartbeat every 5 minutes
   cron.schedule('*/5 * * * *', () => {
     sendHeartbeat()
   })
 
-  // Schedule cleanup job daily at 2 AM
   cron.schedule('0 2 * * *', async () => {
-    console.log('Running daily heartbeat cleanup...')
+    log.info('Running daily heartbeat cleanup')
     const retentionDays = parseInt(process.env.HEARTBEAT_RETENTION_DAYS || '30')
-    const deletedCount = await cleanupOldHeartbeats(pgClient, retentionDays)
-    console.log(`Daily cleanup completed. Removed ${deletedCount} old records.`)
+    const deletedCount = await cleanupOldHeartbeats(pgClient, retentionDays, log)
+    log.info({ deletedCount }, 'Daily cleanup completed')
   })
 
-  // Send initial heartbeat on startup
   await sendHeartbeat()
 
-  // Run initial cleanup on startup (in case we haven't run in a while)
-  console.log('Running initial heartbeat cleanup...')
+  log.info('Running initial heartbeat cleanup')
   const retentionDays = parseInt(process.env.HEARTBEAT_RETENTION_DAYS || '30')
-  await cleanupOldHeartbeats(pgClient, retentionDays)
+  await cleanupOldHeartbeats(pgClient, retentionDays, log)
 
   await app.listen({ port: PORT, host: '0.0.0.0' })
-  console.log(`Heartbeat agent running on port ${PORT}`)
-  console.log(`SSE stream available at http://localhost:${PORT}/heartbeat/stream`)
-  console.log(`Retention policy: keeping last ${retentionDays} days of heartbeats`)
+  log.info({ port: PORT }, 'Heartbeat agent running')
+  log.info({ url: `http://localhost:${PORT}/heartbeat/stream` }, 'SSE stream available')
+  log.info({ retentionDays }, 'Retention policy')
 }
 
-start().catch(console.error)
+start().catch(log.error.bind(log))
