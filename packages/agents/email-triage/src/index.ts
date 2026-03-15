@@ -52,6 +52,14 @@ async function handleNewMessage(email: ParsedEmail, account: string): Promise<vo
     return
   }
 
+  // Acquire processing lock to prevent duplicate handling from concurrent pub/sub notifications
+  const lockKey = `email-triage:lock:${email.messageId}`
+  const acquired = await redisClient.set(lockKey, '1', { NX: true, EX: 300 })
+  if (!acquired) {
+    accountLog.debug({ messageId: email.messageId }, 'Skipping (already being processed)')
+    return
+  }
+
   accountLog.info({ messageId: email.messageId, subject: email.subject, from: email.from }, 'Triaging')
 
   const gmail = new GmailClient(proxyUrl, account)

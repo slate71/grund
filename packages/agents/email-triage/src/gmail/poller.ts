@@ -6,7 +6,7 @@ import type { Logger } from '@grund/logger'
 export interface RedisClient {
   connect(): Promise<unknown>
   get(key: string): Promise<string | null>
-  set(key: string, value: string): Promise<string | null>
+  set(key: string, value: string, options?: { NX?: boolean; EX?: number }): Promise<string | null>
   publish(channel: string, message: string): Promise<number>
   isReady: boolean
   on(event: string, listener: (...args: unknown[]) => void): void
