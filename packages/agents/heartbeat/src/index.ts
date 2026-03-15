@@ -83,4 +83,7 @@ async function start() {
   log.info({ retentionDays }, 'Retention policy')
 }
 
-start().catch(log.error.bind(log))
+start().catch((err) => {
+  log.error({ err }, 'Failed to start')
+  process.exit(1)
+})

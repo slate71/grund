@@ -39,7 +39,7 @@ export async function processHistory(opts: ProcessHistoryOptions): Promise<void>
     for (const id of messageIds) {
       try {
         const msg = await gmail.getMessage(id)
-        const parsed = parseMessage(msg)
+        const parsed = parseMessage(msg, log)
         await onNewMessage(parsed)
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)

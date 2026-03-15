@@ -25,6 +25,7 @@ async function main() {
 
   if (!clientId || !clientSecret) {
     log.error('Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables')
+    log.error('Create credentials at https://console.cloud.google.com/apis/credentials')
     process.exit(1)
   }
 
