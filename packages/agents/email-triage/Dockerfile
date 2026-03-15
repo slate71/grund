@@ -10,7 +10,7 @@ COPY packages/agents/email-triage/package.json ./packages/agents/email-triage/
 COPY packages/logger/package.json ./packages/logger/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Copy source code
 COPY packages/logger/src ./packages/logger/src
