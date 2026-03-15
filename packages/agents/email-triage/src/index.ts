@@ -40,7 +40,7 @@ const BRIEF_ENABLED = process.env.BRIEF_ENABLED !== 'false' // enabled by defaul
 const BRIEF_SCHEDULE_HOURS = (process.env.BRIEF_SCHEDULE_HOURS || '7,15')
   .split(',')
   .map((h) => parseInt(h.trim(), 10))
-const BRIEF_TIMEZONE = process.env.BRIEF_TIMEZONE || 'Europe/Copenhagen'
+const BRIEF_TIMEZONE = process.env.BRIEF_TIMEZONE || 'America/Los_Angeles'
 
 async function handleNewMessage(email: ParsedEmail, account: string): Promise<void> {
   const accountLog = log.child({ account })
