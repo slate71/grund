@@ -117,7 +117,7 @@ export class HistoryExpiredError extends Error {
   }
 }
 
-export function parseMessage(msg: GmailMessage, log?: Logger): ParsedEmail {
+export function parseMessage(msg: GmailMessage, log: Logger): ParsedEmail {
   const getHeader = (name: string) =>
     msg.payload.headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value ?? ''
 
@@ -125,7 +125,7 @@ export function parseMessage(msg: GmailMessage, log?: Logger): ParsedEmail {
   const body = extractBody(msg.payload)
 
   if (!subject && !body) {
-    log?.warn(
+    log.warn(
       { messageId: msg.id, headers: msg.payload.headers.map((h) => h.name), mimeType: msg.payload.mimeType, parts: msg.payload.parts?.length ?? 0 },
       'Empty subject+body',
     )
