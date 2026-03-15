@@ -13,8 +13,8 @@
       "@grund/api": ["packages/api/src"],
       "@grund/db": ["packages/db/src"],
       "@grund/shared": ["packages/shared/src"],
-      "@grund/react-hooks": ["packages/react-hooks/src"],
-      "@grund/dashboard": ["apps/dashboard/src"]
+      "@grund/dashboard": ["apps/dashboard/src"],
+      "@grund/logger": ["packages/logger/src"]
     }
   }
 }
