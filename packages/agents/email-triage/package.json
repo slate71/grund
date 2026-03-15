@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@google-cloud/pubsub": "^4.9.0",
+    "@grund/logger": "workspace:*",
     "fastify": "^5.0.0",
     "pg": "^8.11.3",
     "redis": "^4.6.10",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "pino-pretty": "^13",
     "@types/pg": "^8.10.9",
     "@vitest/ui": "^4.0.18",
     "tsx": "^4.6.0",

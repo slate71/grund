@@ -3,6 +3,7 @@ import type { ParsedEmail } from '../gmail/types'
 import type { TriageDecision } from './types'
 import { CATEGORY_ACTIONS } from './types'
 import { generateDraftReply } from './classifier'
+import type { Logger } from '@grund/logger'
 
 // Cache label name → ID mappings
 const labelCache = new Map<string, string>()
@@ -11,6 +12,7 @@ export interface ActionContext {
   gmail: GmailClient
   anthropicBaseUrl: string
   anthropicApiKey: string
+  log: Logger
 }
 
 export async function executeActions(
@@ -35,7 +37,7 @@ export async function executeActions(
       labelIds.push(labelId)
       labelsApplied.push(labelName)
     } catch (err) {
-      console.error(`Failed to resolve label "${labelName}":`, err)
+      ctx.log.error({ err, label: labelName }, 'Failed to resolve label')
     }
   }
 
@@ -62,7 +64,7 @@ export async function executeActions(
         draftCreated = true
       }
     } catch (err) {
-      console.error(`Failed to create draft for ${email.messageId}:`, err)
+      ctx.log.error({ err, messageId: email.messageId }, 'Failed to create draft')
     }
   }
 

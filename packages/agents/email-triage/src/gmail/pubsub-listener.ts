@@ -1,13 +1,16 @@
 import { PubSub, type Subscription, type Message } from '@google-cloud/pubsub'
+import type { Logger } from '@grund/logger'
 
 export class PubSubListener {
   private pubsub: PubSub
   private subscription: Subscription
   private handlers = new Map<string, () => Promise<void>>()
+  private log: Logger
 
-  constructor(projectId: string, subscriptionName: string) {
+  constructor(projectId: string, subscriptionName: string, log: Logger) {
     this.pubsub = new PubSub({ projectId })
     this.subscription = this.pubsub.subscription(subscriptionName)
+    this.log = log
   }
 
   onNotification(emailAddress: string, handler: () => Promise<void>): void {
@@ -20,16 +23,16 @@ export class PubSubListener {
     })
 
     this.subscription.on('error', (err: Error) => {
-      console.error('Pub/Sub subscription error:', err)
+      this.log.error({ err }, 'Pub/Sub subscription error')
     })
 
-    console.log('Pub/Sub listener started')
+    this.log.info('Pub/Sub listener started')
   }
 
   async stop(): Promise<void> {
     this.subscription.removeAllListeners()
     await this.subscription.close()
-    console.log('Pub/Sub listener stopped')
+    this.log.info('Pub/Sub listener stopped')
   }
 
   private handleMessage(message: Message): void {
@@ -38,14 +41,14 @@ export class PubSubListener {
       const email = data.emailAddress?.toLowerCase()
 
       if (!email) {
-        console.warn('Pub/Sub message missing emailAddress, acking')
+        this.log.warn('Pub/Sub message missing emailAddress, acking')
         message.ack()
         return
       }
 
       const handler = this.handlers.get(email)
       if (!handler) {
-        console.warn(`No handler for ${email}, acking`)
+        this.log.warn({ email }, 'No handler for email, acking')
         message.ack()
         return
       }
@@ -53,11 +56,11 @@ export class PubSubListener {
       handler()
         .then(() => message.ack())
         .catch((err) => {
-          console.error(`Handler error for ${email}:`, err)
+          this.log.error({ err, email }, 'Handler error')
           message.nack()
         })
     } catch (err) {
-      console.error('Failed to parse Pub/Sub message:', err)
+      this.log.error({ err }, 'Failed to parse Pub/Sub message')
       message.ack()
     }
   }

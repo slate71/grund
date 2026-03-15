@@ -11,10 +11,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "fastify": "^5.0.0"
+    "fastify": "^5.0.0",
+    "pino": "^9"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "pino-pretty": "^13",
     "typescript": "^5.6.0"
   }
 }

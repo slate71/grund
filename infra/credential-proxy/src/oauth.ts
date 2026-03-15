@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { homedir } from 'node:os'
+import { log } from './logger'
 
 const DOCKER_CONFIG_DIR = '/config'
 const LOCAL_CONFIG_DIR = resolve(homedir(), '.config/grund')
@@ -83,7 +84,7 @@ export async function getValidAccessToken(
   if (Date.now() < tokens.expiry_date - 60_000) {
     return tokens.access_token
   }
-  console.log(`Refreshing Gmail access token for ${account}...`)
+  log.info({ account }, 'Refreshing Gmail access token')
   const refreshed = await refreshAccessToken(account, tokens)
   return refreshed.access_token
 }
