@@ -6,18 +6,18 @@ export async function sendBrief(
   recipientEmail: string,
   brief: GeneratedBrief,
 ): Promise<string> {
-  const raw = buildEmail(recipientEmail, brief.subject, brief.body)
+  const raw = buildHtmlEmail(recipientEmail, brief.subject, brief.htmlBody)
   return gmail.sendMessage(raw)
 }
 
-function buildEmail(to: string, subject: string, body: string): string {
+function buildHtmlEmail(to: string, subject: string, htmlBody: string): string {
   const message = [
     `To: ${to}`,
     `Subject: ${subject}`,
-    'Content-Type: text/plain; charset=utf-8',
+    'Content-Type: text/html; charset=utf-8',
     'MIME-Version: 1.0',
     '',
-    body,
+    htmlBody,
   ].join('\r\n')
   return Buffer.from(message).toString('base64url')
 }

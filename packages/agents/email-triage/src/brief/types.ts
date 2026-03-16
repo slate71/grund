@@ -34,7 +34,7 @@ export interface BriefSection {
 
 export interface GeneratedBrief {
   subject: string
-  body: string
+  htmlBody: string
   emailCount: number
   periodStart: Date
   periodEnd: Date

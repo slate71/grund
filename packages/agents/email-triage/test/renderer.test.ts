@@ -18,11 +18,26 @@ describe('renderBrief', () => {
     globalThis.fetch = originalFetch
   })
 
-  it('calls Claude and returns plain text brief', async () => {
-    const mockText = 'Worth Reading (1)\nStratechery had a great piece on...\n  - news@stratechery.com | Stratechery Weekly'
+  it('renders an empty brief without calling Claude', async () => {
+    const periodStart = new Date('2025-03-10T07:00:00Z')
+    const periodEnd = new Date('2025-03-10T10:00:00Z')
+
+    const result = await renderBrief([], periodStart, periodEnd, opts)
+
+    expect(result.emailCount).toBe(0)
+    expect(result.subject).toContain('Inbox Zero')
+    expect(result.htmlBody).toContain('Nothing to report')
+    expect(globalThis.fetch).not.toHaveBeenCalled()
+  })
+
+  it('calls Claude to generate HTML for non-empty briefs', async () => {
+    const mockHtml = '<div><h2>Worth Reading</h2><p>1 newsletter</p></div>'
     ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ content: [{ type: 'text', text: mockText }] }),
+      json: () =>
+        Promise.resolve({
+          content: [{ type: 'text', text: mockHtml }],
+        }),
     })
 
     const emails: BriefEmail[] = [
@@ -35,15 +50,18 @@ describe('renderBrief', () => {
         processedAt: new Date('2025-03-10T09:00:00Z'),
       },
     ]
+    const periodStart = new Date('2025-03-10T07:00:00Z')
+    const periodEnd = new Date('2025-03-10T10:00:00Z')
 
-    const result = await renderBrief(emails, new Date('2025-03-10T07:00:00Z'), new Date('2025-03-10T10:00:00Z'), opts)
+    const result = await renderBrief(emails, periodStart, periodEnd, opts)
 
     expect(result.emailCount).toBe(1)
     expect(result.subject).toContain('1 email')
-    expect(result.subject).not.toContain('1 emails')
-    expect(result.body).toContain('Stratechery')
+    expect(result.htmlBody).toContain('Worth Reading')
+    expect(result.htmlBody).toContain('Grund Email Triage')
     expect(globalThis.fetch).toHaveBeenCalledTimes(1)
 
+    // Verify Claude request includes the email data
     const callBody = JSON.parse(
       (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
     )

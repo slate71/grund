@@ -64,10 +64,7 @@ async function generateAndSendBrief(
   const periodStart = getPreviousScheduledTime(now, deps.config)
   const periodEnd = now
 
-  log.info(
-    { periodStart: periodStart.toISOString(), periodEnd: periodEnd.toISOString() },
-    'Collecting emails for brief',
-  )
+  log.info({ periodStart: periodStart.toISOString(), periodEnd: periodEnd.toISOString() }, 'Collecting emails for brief')
 
   const emails = await collectBriefEmails(deps.pgClient, periodStart, periodEnd)
 
@@ -116,12 +113,7 @@ async function recordBrief(pgClient: Client, brief: GeneratedBrief): Promise<voi
   await pgClient.query(
     `INSERT INTO daily_briefs (period_start, period_end, email_count, subject, sent_at)
      VALUES ($1, $2, $3, $4, NOW())`,
-    [
-      brief.periodStart.toISOString(),
-      brief.periodEnd.toISOString(),
-      brief.emailCount,
-      brief.subject,
-    ],
+    [brief.periodStart.toISOString(), brief.periodEnd.toISOString(), brief.emailCount, brief.subject],
   )
 }
 
@@ -140,12 +132,5 @@ function getNowInTimezone(timezone: string): Date {
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     parseInt(parts.find((p) => p.type === type)?.value ?? '0', 10)
 
-  return new Date(
-    get('year'),
-    get('month') - 1,
-    get('day'),
-    get('hour'),
-    get('minute'),
-    get('second'),
-  )
+  return new Date(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'))
 }

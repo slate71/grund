@@ -5,13 +5,13 @@ import type { GeneratedBrief } from '../src/brief/types'
 describe('sendBrief', () => {
   const mockBrief: GeneratedBrief = {
     subject: 'Morning Brief — Monday, March 10 — 5 emails',
-    body: 'Morning Brief\nMonday, March 10\n\nWorth Reading (1)\n---\n  news@example.com\n  Weekly Update',
+    htmlBody: '<div>Brief content</div>',
     emailCount: 5,
     periodStart: new Date('2025-03-10T00:00:00Z'),
     periodEnd: new Date('2025-03-10T07:00:00Z'),
   }
 
-  it('sends the brief as a plain text email via GmailClient.sendMessage', async () => {
+  it('sends the brief as an HTML email via GmailClient.sendMessage', async () => {
     const mockGmail = {
       sendMessage: vi.fn().mockResolvedValue('sent-msg-1'),
     } as never
@@ -25,8 +25,8 @@ describe('sendBrief', () => {
     const decoded = Buffer.from(raw, 'base64url').toString('utf-8')
     expect(decoded).toContain('To: me@example.com')
     expect(decoded).toContain('Subject: Morning Brief')
-    expect(decoded).toContain('Content-Type: text/plain')
-    expect(decoded).toContain('Worth Reading')
+    expect(decoded).toContain('Content-Type: text/html')
+    expect(decoded).toContain('Brief content')
   })
 
   it('throws on Gmail API error', async () => {
