@@ -30,7 +30,7 @@ export async function renderBrief(
     day: 'numeric',
   })
 
-  const subject = `${briefType} Brief — ${dateStr} — ${emails.length} ${emails.length === 1 ? 'email' : 'emails'}`
+  const subject = `${briefType} Brief: ${dateStr}, ${emails.length} ${emails.length === 1 ? 'email' : 'emails'}`
 
   const grouped = new Map<string, BriefEmail[]>()
   for (const email of emails) {
