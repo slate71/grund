@@ -10,6 +10,8 @@ export interface BriefSchedulerDeps {
   pgClient: Client
   gmail: GmailClient
   recipientEmail: string
+  anthropicBaseUrl: string
+  anthropicApiKey: string
   config: BriefConfig
   log: Logger
 }
@@ -75,7 +77,10 @@ async function generateAndSendBrief(
     return null
   }
 
-  const brief = renderBrief(emails, periodStart, periodEnd)
+  const brief = await renderBrief(emails, periodStart, periodEnd, {
+    anthropicBaseUrl: deps.anthropicBaseUrl,
+    anthropicApiKey: deps.anthropicApiKey,
+  })
 
   await sendBrief(deps.gmail, deps.recipientEmail, brief)
 

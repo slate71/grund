@@ -199,6 +199,8 @@ async function start() {
       pgClient,
       gmail,
       recipientEmail: process.env.BRIEF_RECIPIENT || profile.emailAddress,
+      anthropicBaseUrl,
+      anthropicApiKey,
       config: briefConfig,
       log: log.child({ module: 'brief' }),
     })
