@@ -15,7 +15,7 @@ function print_usage() {
     echo "  up-infra        - Start infrastructure services (PostgreSQL, Redis)"
     echo "  up-agents       - Start all agents (uses existing images)"
     echo "  rebuild-agents  - Rebuild and start agents (forces fresh build)"
-    echo "  up-apps         - Start all apps (WDO Inspector, etc.)"
+    echo "  up-apps         - Start all apps"
     echo "  rebuild-apps    - Rebuild and start apps"
     echo "  up-all          - Start everything (infra + agents + apps)"
     echo "  down            - Stop everything"
@@ -40,11 +40,11 @@ case "$1" in
         ;;
     "up-apps")
         echo -e "${GREEN}Starting apps...${NC}"
-        docker-compose -f docker-compose.base.yml -f docker-compose.apps.yml up -d wdo-inspector
+        docker-compose -f docker-compose.base.yml -f docker-compose.apps.yml up -d
         ;;
     "rebuild-apps")
         echo -e "${GREEN}Rebuilding and starting apps...${NC}"
-        docker-compose -f docker-compose.base.yml -f docker-compose.apps.yml up -d --build wdo-inspector
+        docker-compose -f docker-compose.base.yml -f docker-compose.apps.yml up -d --build
         ;;
     "up-all")
         echo -e "${GREEN}Starting everything...${NC}"
