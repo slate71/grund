@@ -7,7 +7,6 @@
 - `fix/[description]` - Bug fixes
 - `refactor/[description]` - Code refactoring
 - `agent/[agent-name]` - New agent development
-- `client/[client-name]` - Client-specific tooling (never actual client data)
 
 ### Workflow
 1. **Create a feature branch** from `main`:
