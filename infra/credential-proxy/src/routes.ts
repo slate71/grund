@@ -1,5 +1,11 @@
 import type { FastifyInstance } from 'fastify'
 import { loadTokens, getValidAccessToken, listAccounts, type GmailTokens } from './oauth'
+import {
+  loadSimpleFinCredentials,
+  parseAccessUrl,
+  isSimpleFinConfigured,
+  type SimpleFinCredentials,
+} from './simplefin'
 import { log } from './logger'
 
 export function registerRoutes(app: FastifyInstance) {
@@ -95,6 +101,56 @@ export function registerRoutes(app: FastifyInstance) {
     return reply.send(body)
   })
 
+  // SimpleFIN: forward read requests (e.g. /simplefin/accounts) to the user's
+  // SimpleFIN access URL, injecting its Basic auth so the credential never
+  // leaves the proxy. The access URL is cached after first load.
+  let simpleFinCache: SimpleFinCredentials | null = null
+
+  function getSimpleFinCredentials(): SimpleFinCredentials | null {
+    if (!simpleFinCache) simpleFinCache = loadSimpleFinCredentials()
+    return simpleFinCache
+  }
+
+  if (isSimpleFinConfigured()) {
+    log.info('SimpleFIN configured')
+  } else {
+    log.warn('SimpleFIN not configured. Run `bun run setup-simplefin` to enable finance sync.')
+  }
+
+  app.all('/simplefin/*', async (request, reply) => {
+    const path = (request.params as { '*': string })['*']
+
+    const creds = getSimpleFinCredentials()
+    if (!creds) {
+      reply.code(503)
+      return { error: 'SimpleFIN not configured. Run `bun run setup-simplefin` first.' }
+    }
+
+    const { baseUrl, authHeader } = parseAccessUrl(creds.access_url)
+    const url = new URL(`${baseUrl}/${path}`)
+
+    const rawUrl = request.url
+    const qIndex = rawUrl.indexOf('?')
+    if (qIndex !== -1) {
+      const params = new URLSearchParams(rawUrl.slice(qIndex + 1))
+      for (const [key, value] of params) {
+        url.searchParams.set(key, value)
+      }
+    }
+
+    const res = await fetch(url.toString(), {
+      method: request.method,
+      headers: { authorization: authHeader },
+    })
+
+    const body = await res.text()
+    log.info({ method: request.method, path, status: res.status }, 'SimpleFIN proxy')
+
+    reply.code(res.status)
+    reply.header('content-type', 'application/json')
+    return reply.send(body)
+  })
+
   app.get('/accounts', async () => {
     return { accounts: listAccounts() }
   })
@@ -104,6 +160,7 @@ export function registerRoutes(app: FastifyInstance) {
       status: 'healthy',
       accounts: listAccounts(),
       anthropicConfigured: true,
+      simplefinConfigured: isSimpleFinConfigured(),
     }
   })
 }

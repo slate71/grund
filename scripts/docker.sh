@@ -32,11 +32,11 @@ case "$1" in
         ;;
     "up-agents")
         echo -e "${GREEN}Starting agents...${NC}"
-        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml up -d heartbeat-agent
+        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml up -d heartbeat-agent finance-agent
         ;;
     "rebuild-agents")
         echo -e "${GREEN}Rebuilding and starting agents...${NC}"
-        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml up -d --build heartbeat-agent
+        docker-compose -f docker-compose.base.yml -f docker-compose.agents.yml up -d --build heartbeat-agent finance-agent
         ;;
     "up-apps")
         echo -e "${GREEN}Starting apps...${NC}"

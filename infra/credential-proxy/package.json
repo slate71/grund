@@ -8,6 +8,7 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun run src/index.ts",
     "setup": "bun run src/setup-oauth.ts",
+    "setup-simplefin": "bun run src/setup-simplefin.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

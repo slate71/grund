@@ -18,6 +18,9 @@ import { categorizeTransaction } from './categorize/categorizer'
 const PORT = parseInt(process.env.PORT || '3003', 10)
 const SYNC_SOURCE = 'simplefin'
 const CATEGORIZE_BATCH = parseInt(process.env.CATEGORIZE_BATCH || '25', 10)
+// Upper bound on transactions categorized per run, so a large first sync can't
+// trigger an unbounded burst of Claude calls. The remainder is picked up next tick.
+const CATEGORIZE_MAX_PER_RUN = parseInt(process.env.CATEGORIZE_MAX_PER_RUN || '500', 10)
 
 const log = createLogger('finance')
 
@@ -83,32 +86,57 @@ async function runCategorize(): Promise<void> {
     return
   }
   isCategorizing.value = true
+  // Count attempts (each = one Claude call), so the cap bounds cost and a batch
+  // of persistently-failing rows can't spin forever.
+  let attempted = 0
   try {
-    const pending = await getUncategorized(pgClient, CATEGORIZE_BATCH)
-    if (pending.length === 0) return
+    // Drain the backlog in batches so a fresh sync is fully categorized in one
+    // run, rather than 25 transactions per cron tick. Bounded by CATEGORIZE_MAX_PER_RUN.
+    while (attempted < CATEGORIZE_MAX_PER_RUN) {
+      const pending = await getUncategorized(pgClient, CATEGORIZE_BATCH)
+      if (pending.length === 0) break
 
-    log.info({ count: pending.length }, 'Categorizing transactions')
-    for (const txn of pending) {
-      try {
-        const decision = await categorizeTransaction(txn, { anthropicBaseUrl, anthropicApiKey })
-        await setCategory(pgClient, txn.externalId, decision)
-        await redisClient.publish(
-          'finance',
-          JSON.stringify({
-            externalId: txn.externalId,
-            payee: txn.payee,
-            amount: txn.amount,
-            category: decision.category,
-            confidence: decision.confidence,
-          }),
-        )
-        log.info(
-          { payee: txn.payee, category: decision.category, confidence: decision.confidence },
-          'Categorized',
-        )
-      } catch (err) {
-        log.error({ err, externalId: txn.externalId }, 'Failed to categorize transaction')
+      log.info({ count: pending.length }, 'Categorizing transactions')
+      let succeeded = 0
+      for (const txn of pending) {
+        attempted++
+        try {
+          const decision = await categorizeTransaction(txn, { anthropicBaseUrl, anthropicApiKey })
+          await setCategory(pgClient, txn.externalId, decision)
+          await redisClient.publish(
+            'finance',
+            JSON.stringify({
+              externalId: txn.externalId,
+              payee: txn.payee,
+              amount: txn.amount,
+              category: decision.category,
+              confidence: decision.confidence,
+            }),
+          )
+          succeeded++
+          log.info(
+            { payee: txn.payee, category: decision.category, confidence: decision.confidence },
+            'Categorized',
+          )
+        } catch (err) {
+          log.error({ err, externalId: txn.externalId }, 'Failed to categorize transaction')
+        }
+        if (attempted >= CATEGORIZE_MAX_PER_RUN) break
       }
+
+      // Every row in the batch failed — getUncategorized would just return the
+      // same stuck rows, so stop rather than loop on them.
+      if (succeeded === 0) {
+        log.warn({ batch: pending.length }, 'Batch made no progress; stopping run')
+        break
+      }
+    }
+
+    if (attempted >= CATEGORIZE_MAX_PER_RUN) {
+      log.warn(
+        { attempted, cap: CATEGORIZE_MAX_PER_RUN },
+        'Hit per-run categorization cap; remainder will be picked up next run',
+      )
     }
   } finally {
     isCategorizing.value = false
