@@ -29,16 +29,15 @@ SimpleFIN ──▶ credential-proxy (holds the token) ──▶ finance agent
 - **API** (`app.ts`): `GET /finance/transactions`, `GET /finance/spending`,
   `GET /health`.
 
-## Build status (milestone 1)
+## Build status
 
 - ✅ Schema (`@grund/db` + runtime bootstrap), categorizer, read API, sync
-  pipeline, normalization.
-- ⛔ **Not yet wired:** the credential-proxy `/simplefin` route (milestone 2).
-  Until it exists, `runSync()` logs a warning and no-ops; everything downstream
-  (categorization, API) works against whatever transactions are present.
-
-Once milestone 2 lands the proxy route, the agent ingests real transactions on
-its 30-minute cron with no further changes here.
+  pipeline, normalization (milestone 1).
+- ✅ Credential-proxy `/simplefin` route (milestone 2). Sync pulls real
+  transactions once the proxy is configured with a SimpleFIN access URL — run
+  `bun run setup-simplefin` in `infra/credential-proxy`. Until then `runSync()`
+  logs a warning and no-ops; everything downstream (categorization, API) works
+  against whatever transactions are present.
 
 ## Environment
 
