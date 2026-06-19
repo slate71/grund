@@ -11,3 +11,4 @@ export type Database = ReturnType<typeof createDb>
 
 export { schema }
 export { events, classifications, outcomeEnum } from './schema'
+export { financeAccounts, transactions, financeSyncState } from './schema'

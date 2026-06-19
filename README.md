@@ -1,18 +1,29 @@
 # Grund
 
-> Building agentic systems that run business operations end-to-end
+> A personal operating system, run as code
 
-A monorepo for developing autonomous agents that handle real-world workflows. Starting with my own operations (career, consulting, finances), expanding to small business back-offices.
+A monorepo of autonomous agents that handle my own day-to-day operations, the
+dashboard that watches them, and the infrastructure that keeps them safe. Everything
+ships with `git push`.
+
+This is a personal platform — not a product. It exists to run my operations, and it
+grows one agent at a time.
 
 ## What's Here
 
 ### Built and Working
-- **AI Interaction Classifier** - Evaluates conversation outcomes for support automation
+- **Email triage agent** — watches Gmail, classifies incoming mail with Claude,
+  drafts replies, archives newsletters, and sends a scannable brief twice a day
+- **Credential proxy** — brokers OAuth and Anthropic credentials so agents never
+  hold secrets directly
+- **Heartbeat agent** — liveness and health checks
+- **Dashboard + API** — monitor agent activity and review classified outcomes
 
 ### Architecture
 - **TypeScript** throughout with strict types
 - **Modular API** with Fastify and domain-separated routes
 - **PostgreSQL** with Drizzle ORM and schema separation
+- **Redis** for events and processing locks
 - **React** dashboard for monitoring agent operations
 
 ## Project Structure
@@ -20,15 +31,17 @@ A monorepo for developing autonomous agents that handle real-world workflows. St
 ```
 grund/
 ├── apps/
-│   ├── dashboard/          # Operations monitoring dashboard
-│   ├── chat-demo/          # Testing ground for AI interactions
-│   └── hooks-demo/         # React hooks demonstration
+│   └── dashboard/          # Agent monitoring dashboard
 ├── packages/
-│   ├── agents/             # Autonomous agent definitions
+│   ├── agents/
+│   │   ├── email-triage/   # Gmail triage + daily brief
+│   │   └── heartbeat/      # Liveness / health agent
 │   ├── api/                # Backend API with modular routes
 │   ├── db/                 # Database schemas and migrations
-│   ├── shared/             # Shared types and utilities
-│   └── react-hooks/        # Reusable React patterns
+│   ├── shared/             # Shared types
+│   └── logger/             # Structured logger
+└── infra/
+    └── credential-proxy/   # OAuth + Anthropic credential broker
 ```
 
 ## Prerequisites
