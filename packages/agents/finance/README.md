@@ -49,3 +49,9 @@ SimpleFIN ──▶ credential-proxy (holds the token) ──▶ finance agent
 | `ANTHROPIC_BASE_URL`   | no       | `$CREDENTIAL_PROXY_URL/anthropic` |
 | `PORT`                 | no       | `3003`                   |
 | `CATEGORIZE_BATCH`     | no       | `25`                     |
+| `CATEGORIZE_MAX_PER_RUN` | no     | `500`                    |
+
+Each run drains the uncategorized backlog in batches of `CATEGORIZE_BATCH`, up
+to `CATEGORIZE_MAX_PER_RUN` transactions (one Claude call each) — so a large
+first sync is categorized promptly without an unbounded burst of calls. Any
+remainder is picked up on the next 30-minute tick.
