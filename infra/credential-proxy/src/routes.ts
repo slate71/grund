@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { loadTokens, getValidAccessToken, listAccounts, type GmailTokens } from './oauth'
+import { loadAccessUrl, buildSimplefinRequest } from './simplefin'
 import { log } from './logger'
 
 export function registerRoutes(app: FastifyInstance) {
@@ -26,6 +27,18 @@ export function registerRoutes(app: FastifyInstance) {
     log.warn('No Gmail accounts configured. Run `bun run setup` first.')
   } else {
     log.info({ accounts }, 'Gmail accounts configured')
+  }
+
+  // Cached after first load; the access URL is long-lived (no refresh).
+  let cachedAccessUrl = loadAccessUrl()
+  function getAccessUrl(): string | null {
+    if (!cachedAccessUrl) cachedAccessUrl = loadAccessUrl()
+    return cachedAccessUrl
+  }
+  if (!cachedAccessUrl) {
+    log.warn('SimpleFIN not configured. Run `bun run setup-simplefin <token>` first.')
+  } else {
+    log.info('SimpleFIN access configured')
   }
 
   app.all('/anthropic/*', async (request, reply) => {
@@ -95,6 +108,29 @@ export function registerRoutes(app: FastifyInstance) {
     return reply.send(body)
   })
 
+  app.all('/simplefin/*', async (request, reply) => {
+    const accessUrl = getAccessUrl()
+    if (!accessUrl) {
+      reply.code(503)
+      return { error: 'SimpleFIN not configured. Run `bun run setup-simplefin <token>`.' }
+    }
+
+    const path = (request.params as { '*': string })['*']
+    const { url, authHeader } = buildSimplefinRequest(accessUrl, path, request.url)
+
+    const res = await fetch(url, {
+      method: request.method,
+      headers: { authorization: authHeader },
+    })
+
+    const body = await res.text()
+    log.info({ method: request.method, path, status: res.status }, 'SimpleFIN proxy')
+
+    reply.code(res.status)
+    reply.header('content-type', 'application/json')
+    return reply.send(body)
+  })
+
   app.get('/accounts', async () => {
     return { accounts: listAccounts() }
   })
@@ -104,6 +140,7 @@ export function registerRoutes(app: FastifyInstance) {
       status: 'healthy',
       accounts: listAccounts(),
       anthropicConfigured: true,
+      simplefinConfigured: getAccessUrl() !== null,
     }
   })
 }
