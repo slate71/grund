@@ -28,7 +28,9 @@ export async function categorizeTransaction(
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      // Haiku is plenty for single-transaction classification, and ~5x cheaper
+      // than Sonnet across a full statement import. Override via CATEGORIZE_MODEL.
+      model: process.env.CATEGORIZE_MODEL || 'claude-haiku-4-5',
       max_tokens: 512,
       system: CATEGORIZE_SYSTEM_PROMPT,
       tools: [CATEGORIZE_TOOL_DEFINITION],
