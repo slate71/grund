@@ -84,32 +84,44 @@ async function runCategorize(): Promise<void> {
   }
   isCategorizing.value = true
   try {
-    const pending = await getUncategorized(pgClient, CATEGORIZE_BATCH)
-    if (pending.length === 0) return
+    // Drain the full backlog (a CSV import can add many rows at once), paging by
+    // CATEGORIZE_BATCH. The attempted set excludes rows already tried this run, so
+    // a persistently-failing transaction can't loop forever — it stays
+    // uncategorized and is retried on the next cycle.
+    const attempted = new Set<string>()
+    let total = 0
+    for (;;) {
+      const batch = await getUncategorized(pgClient, CATEGORIZE_BATCH)
+      const pending = batch.filter((txn) => !attempted.has(txn.externalId))
+      if (pending.length === 0) break
 
-    log.info({ count: pending.length }, 'Categorizing transactions')
-    for (const txn of pending) {
-      try {
-        const decision = await categorizeTransaction(txn, { anthropicBaseUrl, anthropicApiKey })
-        await setCategory(pgClient, txn.externalId, decision)
-        await redisClient.publish(
-          'finance',
-          JSON.stringify({
-            externalId: txn.externalId,
-            payee: txn.payee,
-            amount: txn.amount,
-            category: decision.category,
-            confidence: decision.confidence,
-          }),
-        )
-        log.info(
-          { payee: txn.payee, category: decision.category, confidence: decision.confidence },
-          'Categorized',
-        )
-      } catch (err) {
-        log.error({ err, externalId: txn.externalId }, 'Failed to categorize transaction')
+      log.info({ count: pending.length }, 'Categorizing transactions')
+      for (const txn of pending) {
+        attempted.add(txn.externalId)
+        try {
+          const decision = await categorizeTransaction(txn, { anthropicBaseUrl, anthropicApiKey })
+          await setCategory(pgClient, txn.externalId, decision)
+          await redisClient.publish(
+            'finance',
+            JSON.stringify({
+              externalId: txn.externalId,
+              payee: txn.payee,
+              amount: txn.amount,
+              category: decision.category,
+              confidence: decision.confidence,
+            }),
+          )
+          log.info(
+            { payee: txn.payee, category: decision.category, confidence: decision.confidence },
+            'Categorized',
+          )
+          total++
+        } catch (err) {
+          log.error({ err, externalId: txn.externalId }, 'Failed to categorize transaction')
+        }
       }
     }
+    if (total > 0) log.info({ total }, 'Categorization complete')
   } finally {
     isCategorizing.value = false
   }
