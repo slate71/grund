@@ -19,6 +19,6 @@ COPY packages/agents/finance/tsconfig.json ./packages/agents/finance/
 
 WORKDIR /app/packages/agents/finance
 
-EXPOSE 3003
+EXPOSE 3004
 
 CMD ["bun", "run", "src/index.ts"]

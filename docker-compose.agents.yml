@@ -85,6 +85,37 @@ services:
       timeout: 10s
       retries: 3
 
+  finance-agent:
+    build:
+      context: .
+      dockerfile: packages/agents/finance/Dockerfile
+    container_name: grund-finance
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      credential-proxy:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://grund:grund_db_2024@postgres:5432/grund
+      REDIS_URL: redis://redis:6379
+      CREDENTIAL_PROXY_URL: http://credential-proxy:9876
+      ANTHROPIC_BASE_URL: http://credential-proxy:9876/anthropic
+      ANTHROPIC_API_KEY: placeholder
+      PORT: 3004
+    ports:
+      - '3004:3004'
+    networks:
+      - grund-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3004/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   grund-network:
     external: false

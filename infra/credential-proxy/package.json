@@ -8,7 +8,9 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun run src/index.ts",
     "setup": "bun run src/setup-oauth.ts",
-    "typecheck": "tsc --noEmit"
+    "setup-simplefin": "bun run src/setup-simplefin.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "fastify": "^5.0.0",
@@ -17,6 +19,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "pino-pretty": "^13",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^4.0.18"
   }
 }
