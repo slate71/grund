@@ -9,6 +9,7 @@
     "dev": "bun --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target node",
     "start": "bun run dist/index.js",
+    "import-apple-card": "bun run src/import-apple-card.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
