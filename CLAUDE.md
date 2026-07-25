@@ -11,8 +11,11 @@ This is a personal platform, not a product. Everything here serves my own operat
 There are no clients, no tenants, no customers — just me, my agents, and the harness
 around them.
 
-**Current state:** One working agent (email triage), with a credential-proxy and
-dashboard around it. Adding agents one at a time, each shaped like the first.
+**Current state:** email-triage decommissioned 2026-07-25 after a 4-month silent
+failure (crash-looped on a dead OAuth token, plus a duplicate-send bug in its brief
+scheduler — see TOG-880). Source kept in-tree as the reference case for the rewrite;
+not deployed. finance-agent and heartbeat are running; finance-agent's always-on
+shape is under review too (TOG-879).
 
 ## Structure
 
