@@ -1,0 +1,11 @@
+# Scraped data (can be large, regenerate with `bun run scrape`)
+data/
+
+# Output files (regenerate with `bun run analyze`)
+output/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/

@@ -1,0 +1,22 @@
+{
+  "name": "@grund/newsletter-analyzer",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Analyze Chris Koerner's newsletter for business opportunities",
+  "scripts": {
+    "analyze": "bun run src/index.ts",
+    "scrape": "bun run src/scraper.ts",
+    "extract": "bun run src/extractor.ts",
+    "score": "bun run src/scorer.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "playwright": "^1.58.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
